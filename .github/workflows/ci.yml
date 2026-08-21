@@ -30,6 +30,9 @@ jobs:
       - name: govulncheck
         run: go tool govulncheck ./...
 
+      - name: gofumpt
+        run: diff -u <(echo -n) <(go tool gofumpt -l .)
+
       - name: Go Tidy
         run: go mod tidy && git diff --exit-code
 
