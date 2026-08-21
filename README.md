@@ -7,7 +7,7 @@ Bag is a simple, fast and declarative way to create to manage the installed bina
 I recommend to install using Go.
 
 ```go
-go install github.com/jamesjarvis/bag@latest
+go install github.com/jamesjohnsdev/bag@latest
 ```
 
 Otherwise, you can download the binary from the [releases](https://github.com/jamesjarvis/bag/releases) page.
