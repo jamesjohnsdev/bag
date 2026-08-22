@@ -7,7 +7,7 @@ import (
 
 const (
 	globDir  = "bag"
-	manName  = "bag.toml"
+	ManName  = "bag.toml"
 	lockName = ".bag-lock"
 )
 
@@ -20,7 +20,7 @@ func FindManifest() (path string, global bool, err error) {
 		return "", false, err
 	}
 	for {
-		candidate := filepath.Join(workDir, manName)
+		candidate := filepath.Join(workDir, ManName)
 		if _, err := os.Stat(candidate); err == nil {
 			return candidate, false, nil
 		}
@@ -36,7 +36,7 @@ func FindManifest() (path string, global bool, err error) {
 	if err != nil {
 		return "", false, err
 	}
-	return filepath.Join(home, ".config", globDir, manName), true, nil
+	return filepath.Join(home, ".config", globDir, ManName), true, nil
 }
 
 // FindLock gets the path of the lockfile
