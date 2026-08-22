@@ -1,7 +1,6 @@
 package manifest
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -42,13 +41,8 @@ func FindManifest() (path string, global bool, err error) {
 
 // FindLock gets the path of the lockfile
 // It only returns the linked lockfile given a bag.toml path
-func FindLock(path string) (string, error) {
+func FindLock(path string) string {
 	parentDir := filepath.Dir(path)
 	lockPath := filepath.Join(parentDir, lockName)
-	// TODO: possibly drop this check if not necessary
-	_, err := os.Stat(lockPath)
-	if err != nil {
-		return "", fmt.Errorf("find lock file: %w", err)
-	}
-	return lockPath, nil
+	return lockPath
 }
