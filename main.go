@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"github.com/alecthomas/kong"
+	"github.com/jamesjohnsdev/bag/cmd"
+)
 
 func main() {
-	fmt.Println("bag")
+	ctx := kong.Parse(&cmd.CLI{})
+	ctx.FatalIfErrorf(ctx.Run())
 }

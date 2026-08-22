@@ -8,6 +8,8 @@ tool (
 	mvdan.cc/gofumpt
 )
 
+require github.com/alecthomas/kong v1.16.1
+
 require (
 	4d63.com/gocheckcompilerdirectives v1.4.0 // indirect
 	4d63.com/gochecknoglobals v0.2.2 // indirect
