@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/alecthomas/kong"
-	"github.com/jamesjohnsdev/bag/cmd"
+	"github.com/jamesjohnsdev/bag/internal/cmd"
 )
 
 func main() {
