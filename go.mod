@@ -8,7 +8,10 @@ tool (
 	mvdan.cc/gofumpt
 )
 
-require github.com/alecthomas/kong v1.16.1
+require (
+	github.com/BurntSushi/toml v1.6.0
+	github.com/alecthomas/kong v1.16.1
+)
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.4.0 // indirect
@@ -26,7 +29,6 @@ require (
 	github.com/Antonboom/errname v1.1.2 // indirect
 	github.com/Antonboom/nilnil v1.1.2 // indirect
 	github.com/Antonboom/testifylint v1.6.4 // indirect
-	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/ClickHouse/clickhouse-go-linter v1.2.1 // indirect
 	github.com/Djarvur/go-err113 v0.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
