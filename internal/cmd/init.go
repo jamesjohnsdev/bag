@@ -31,7 +31,7 @@ func (c *InitCmd) Run() error {
 		Entries: map[string]manifest.LockEntry{},
 	})
 	if err == nil {
-		fmt.Println("Intialised succesfully")
+		fmt.Println("Intialised successfully")
 	}
 	return err
 }
