@@ -8,12 +8,6 @@ import (
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 )
 
-const (
-	globDir  = "bag"
-	manName  = "bag.toml"
-	lockName = ".bag-lock"
-)
-
 type InitCmd struct{}
 
 func (c *InitCmd) Run() error {
@@ -21,7 +15,7 @@ func (c *InitCmd) Run() error {
 	if err != nil {
 		return err
 	}
-	manifestPath := filepath.Join(cwd, manName)
+	manifestPath := filepath.Join(cwd, manifest.ManName)
 	if _, err := os.Stat(manifestPath); err == nil {
 		return fmt.Errorf("already initialised: %s exists", manifestPath)
 	}
