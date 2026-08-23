@@ -94,20 +94,9 @@ func TestFindLock(t *testing.T) {
 		lockPath := filepath.Join(dir, ".bag-lock")
 		touch(t, lockPath)
 
-		got, err := manifest.FindLock(manifestPath)
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := manifest.FindLock(manifestPath)
 		if got != lockPath {
 			t.Errorf("FindLock() = %q, want %q", got, lockPath)
-		}
-	})
-
-	t.Run("errors when lock file missing", func(t *testing.T) {
-		dir := t.TempDir()
-		_, err := manifest.FindLock(filepath.Join(dir, "bag.toml"))
-		if err == nil {
-			t.Error("expected error for missing lock file, got nil")
 		}
 	})
 
@@ -116,10 +105,7 @@ func TestFindLock(t *testing.T) {
 		manifestPath := filepath.Join(dir, "bag.toml")
 		touch(t, filepath.Join(dir, ".bag-lock"))
 
-		got, err := manifest.FindLock(manifestPath)
-		if err != nil {
-			t.Fatal(err)
-		}
+		got := manifest.FindLock(manifestPath)
 		if filepath.Dir(got) != dir {
 			t.Errorf("lock dir = %q, want %q", filepath.Dir(got), dir)
 		}
