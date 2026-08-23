@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -17,7 +18,7 @@ const (
 func FindManifest() (path string, global bool, err error) {
 	workDir, err := os.Getwd()
 	if err != nil {
-		return "", false, err
+		return "", false, fmt.Errorf("finding working dir: %w", err)
 	}
 	for {
 		candidate := filepath.Join(workDir, ManName)
@@ -34,7 +35,7 @@ func FindManifest() (path string, global bool, err error) {
 	// fall back to global
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", false, err
+		return "", false, fmt.Errorf("finding home dir: %w", err)
 	}
 	return filepath.Join(home, ".config", globDir, ManName), true, nil
 }
