@@ -134,3 +134,17 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 
 	return "sha256:" + hashStr, nil
 }
+
+// LinkToPath links a stored binary to path
+func LinkToPath(name, version, binDir string) error {
+	// 0755 = rwxr-xr-x
+	if err := os.MkdirAll(binDir, 0755); err != nil {
+		return fmt.Errorf("creating bin dir: %w", err)
+	}
+	src := BinaryPath(name, version)
+	dst := filepath.Join(binDir, name)
+	if err := os.Symlink(src, dst); err != nil {
+		return fmt.Errorf("linking binary to path: %w", err)
+	}
+	return nil
+}
