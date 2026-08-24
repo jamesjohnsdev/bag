@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -72,4 +73,16 @@ func Write(path string, man *Manifest) error {
 	}
 	defer file.Close()
 	return toml.NewEncoder(file).Encode(raw)
+}
+
+// Add updates a manifest file with an additional binary entry
+func AddBinary(manifestPath, name string, entry BinaryEntry) error {
+	manifest, err := Parse(manifestPath)
+	if err != nil {
+		return fmt.Errorf("parsing manifest: %w", err)
+	}
+	// currently this will overrite similar named items
+	// should consider prompt/check
+	manifest.Binaries[name] = entry
+	return Write(manifestPath, manifest)
 }
