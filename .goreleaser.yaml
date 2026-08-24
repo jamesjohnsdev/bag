@@ -1,0 +1,38 @@
+version: 2
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+nfpms:
+  - package_name: bag
+    homepage: https://github.com/jamesjohnsdev/bag
+    description: A simple, fast and declarative way to manage installed binaries across your system
+    maintainer: James Johns <192176108+jamesjohnsdev@users.noreply.github.com>
+    license: MIT
+    formats:
+      - deb
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
