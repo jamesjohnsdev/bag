@@ -28,7 +28,7 @@ type = "script"
 func writeTemp(t *testing.T, content string) string {
 	t.Helper()
 	f := filepath.Join(t.TempDir(), "bag.toml")
-	if err := os.WriteFile(f, []byte(content), 0600); err != nil {
+	if err := os.WriteFile(f, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return f
@@ -169,7 +169,7 @@ func FuzzParse(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		tmp := filepath.Join(t.TempDir(), "fuzz.toml")
-		if err := os.WriteFile(tmp, data, 0600); err != nil {
+		if err := os.WriteFile(tmp, data, 0o600); err != nil {
 			t.Skip()
 		}
 		m, err := manifest.Parse(tmp)

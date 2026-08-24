@@ -21,7 +21,7 @@ hash = "sha256:789012ghi345789012ghi345789012ghi345789012ghi345789012ghi345789"
 func writeLockTemp(t *testing.T, content string) string {
 	t.Helper()
 	f := filepath.Join(t.TempDir(), ".bag-lock")
-	if err := os.WriteFile(f, []byte(content), 0600); err != nil {
+	if err := os.WriteFile(f, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	return f
@@ -131,7 +131,7 @@ func FuzzParseLock(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		tmp := filepath.Join(t.TempDir(), "fuzz.lock")
-		if err := os.WriteFile(tmp, data, 0600); err != nil {
+		if err := os.WriteFile(tmp, data, 0o600); err != nil {
 			t.Skip()
 		}
 		lf, err := manifest.ParseLock(tmp)

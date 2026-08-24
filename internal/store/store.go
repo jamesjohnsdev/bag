@@ -96,7 +96,7 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 		return "sha256:" + metadata.Hash, nil
 	}
 	// 0755 = rwxr-xr-x
-	if err := os.MkdirAll(EntryDir(name, version), 0755); err != nil {
+	if err := os.MkdirAll(EntryDir(name, version), 0o755); err != nil {
 		return "", fmt.Errorf("creating directory: %w", err)
 	}
 	srcFile, err := os.Open(srcPath)
@@ -131,10 +131,10 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 	}
 
 	// 0555 = r-xr-xr-x
-	if err := os.Chmod(BinaryPath(name, version), 0555); err != nil {
+	if err := os.Chmod(BinaryPath(name, version), 0o555); err != nil {
 		return "", fmt.Errorf("chmod binary: %w", err)
 	}
-	if err := os.Chmod(EntryDir(name, version), 0555); err != nil {
+	if err := os.Chmod(EntryDir(name, version), 0o555); err != nil {
 		return "", fmt.Errorf("chmod entry dir: %w", err)
 	}
 
@@ -144,7 +144,7 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 // LinkToPath links a stored binary to path
 func LinkToPath(name, version, binDir string) error {
 	// 0755 = rwxr-xr-x
-	if err := os.MkdirAll(binDir, 0755); err != nil {
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		return fmt.Errorf("creating bin dir: %w", err)
 	}
 	src := BinaryPath(name, version)

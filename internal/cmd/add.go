@@ -40,7 +40,7 @@ func (cmd *AddCmd) Run() error {
 		}
 		// auto-create global manifest if not yet exists
 		if _, err := os.Stat(manPath); os.IsNotExist(err) {
-			if err := os.MkdirAll(filepath.Dir(manPath), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(manPath), 0o755); err != nil {
 				return ErrGlobeInit(err)
 			}
 			if err := manifest.Write(manPath, &manifest.Manifest{}); err != nil {

@@ -11,7 +11,7 @@ import (
 // touch creates an empty file at path.
 func touch(t *testing.T, path string) {
 	t.Helper()
-	if err := os.WriteFile(path, nil, 0600); err != nil {
+	if err := os.WriteFile(path, nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -37,7 +37,7 @@ func TestFindManifest(t *testing.T) {
 	t.Run("finds bag.toml in parent directory", func(t *testing.T) {
 		parent := t.TempDir()
 		child := filepath.Join(parent, "subdir")
-		if err := os.Mkdir(child, 0755); err != nil {
+		if err := os.Mkdir(child, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		touch(t, filepath.Join(parent, "bag.toml"))
@@ -58,7 +58,7 @@ func TestFindManifest(t *testing.T) {
 	t.Run("cwd bag.toml takes precedence over parent", func(t *testing.T) {
 		parent := t.TempDir()
 		child := filepath.Join(parent, "subdir")
-		if err := os.Mkdir(child, 0755); err != nil {
+		if err := os.Mkdir(child, 0o755); err != nil {
 			t.Fatal(err)
 		}
 		touch(t, filepath.Join(parent, "bag.toml"))
