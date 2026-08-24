@@ -34,7 +34,7 @@ func (cmd *AddCmd) Run() error {
 		if err := store.LinkToPath(binName, version, binDir); err != nil {
 			return fmt.Errorf("installing locally: %w", err)
 		}
-		manPath, _, err := manifest.FindManifest()
+		manPath, _, err := manifest.FindManifest(true)
 		if err != nil {
 			return err
 		}
