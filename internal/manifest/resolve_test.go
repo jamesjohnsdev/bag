@@ -22,7 +22,7 @@ func TestFindManifest(t *testing.T) {
 		touch(t, filepath.Join(dir, "bag.toml"))
 		t.Chdir(dir)
 
-		path, global, err := manifest.FindManifest()
+		path, global, err := manifest.FindManifest(true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -43,7 +43,7 @@ func TestFindManifest(t *testing.T) {
 		touch(t, filepath.Join(parent, "bag.toml"))
 		t.Chdir(child)
 
-		path, global, err := manifest.FindManifest()
+		path, global, err := manifest.FindManifest(true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -65,7 +65,7 @@ func TestFindManifest(t *testing.T) {
 		touch(t, filepath.Join(child, "bag.toml"))
 		t.Chdir(child)
 
-		path, _, err := manifest.FindManifest()
+		path, _, err := manifest.FindManifest(true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -77,7 +77,21 @@ func TestFindManifest(t *testing.T) {
 	t.Run("falls back to global when no bag.toml found", func(t *testing.T) {
 		t.Chdir(t.TempDir())
 
-		_, global, err := manifest.FindManifest()
+		_, global, err := manifest.FindManifest(true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !global {
+			t.Error("global = false, want true")
+		}
+	})
+
+	t.Run("local = false skips search and returns global", func(t *testing.T) {
+		dir := t.TempDir()
+		touch(t, filepath.Join(dir, "bag.toml"))
+		t.Chdir(dir)
+
+		_, global, err := manifest.FindManifest(false)
 		if err != nil {
 			t.Fatal(err)
 		}
