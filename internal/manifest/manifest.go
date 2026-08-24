@@ -71,7 +71,9 @@ func Write(path string, man *Manifest) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	return toml.NewEncoder(file).Encode(raw)
 }
 
