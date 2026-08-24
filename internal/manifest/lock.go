@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 
@@ -37,4 +38,13 @@ func WriteLock(path string, lf *LockFile) error {
 	}
 	defer file.Close()
 	return toml.NewEncoder(file).Encode(lf.Entries)
+}
+
+func AddLockEntry(lockPath, name string, entry LockEntry) error {
+	lockfile, err := ParseLock(lockPath)
+	if err != nil {
+		return fmt.Errorf("parsing lockfile: %w", err)
+	}
+	lockfile.Entries[name] = entry
+	return WriteLock(lockPath, lockfile)
 }
