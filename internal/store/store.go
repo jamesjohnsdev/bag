@@ -76,7 +76,9 @@ func WriteMetadata(name, version string, metadata Metadata) error {
 	if err != nil {
 		return fmt.Errorf("creating metadata file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	if err := toml.NewEncoder(file).Encode(metadata); err != nil {
 		return fmt.Errorf("encoding metadata file: %w", err)
 	}
@@ -101,13 +103,17 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 	if err != nil {
 		return "", err
 	}
-	defer srcFile.Close()
+	defer func() {
+		_ = srcFile.Close()
+	}()
 
 	dstFile, err := os.Create(BinaryPath(name, version))
 	if err != nil {
 		return "", err
 	}
-	defer dstFile.Close()
+	defer func() {
+		_ = dstFile.Close()
+	}()
 
 	hash := sha256.New()
 	writer := io.MultiWriter(dstFile, hash)

@@ -36,7 +36,9 @@ func WriteLock(path string, lf *LockFile) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 	return toml.NewEncoder(file).Encode(lf.Entries)
 }
 
