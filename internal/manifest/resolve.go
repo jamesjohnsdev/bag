@@ -14,23 +14,26 @@ const (
 
 // FindManifest will return the path of the closest bag.toml file
 // if not found in recursive search, will default to home ~/.config/bag/
+// Specify whether local or global is wanted in param
 // returns path + boolean whether it is global manifest
-func FindManifest() (path string, global bool, err error) {
-	workDir, err := os.Getwd()
-	if err != nil {
-		return "", false, fmt.Errorf("finding working dir: %w", err)
-	}
-	for {
-		candidate := filepath.Join(workDir, ManName)
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate, false, nil
+func FindManifest(local bool) (path string, global bool, err error) {
+	if local {
+		workDir, err := os.Getwd()
+		if err != nil {
+			return "", false, fmt.Errorf("finding working dir: %w", err)
 		}
-		parent := filepath.Dir(workDir)
-		if parent == workDir {
-			// reached filesystem root
-			break
+		for {
+			candidate := filepath.Join(workDir, ManName)
+			if _, err := os.Stat(candidate); err == nil {
+				return candidate, false, nil
+			}
+			parent := filepath.Dir(workDir)
+			if parent == workDir {
+				// reached filesystem root
+				break
+			}
+			workDir = parent
 		}
-		workDir = parent
 	}
 	// fall back to global
 	home, err := os.UserHomeDir()
