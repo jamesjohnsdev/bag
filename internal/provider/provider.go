@@ -14,7 +14,7 @@ type Resolution struct {
 }
 
 type Provider interface {
-	Detect(source url.URL) bool
+	Detect(src url.URL) bool
 	Resolve(ctx context.Context, source, version string) (Resolution, error)
 }
 
@@ -32,4 +32,12 @@ func Dispatch(source string) (Provider, error) {
 		}
 	}
 	return nil, fmt.Errorf("no provider for source %s", source)
+}
+
+// DirectURL is a helper which returns true if a direct url has been provided
+func DirectURL(src url.URL) bool {
+	if src.Scheme == "https" || src.Scheme == "http" {
+		return true
+	}
+	return false
 }
