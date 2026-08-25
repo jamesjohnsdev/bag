@@ -26,6 +26,6 @@ func (provider URLProvider) Detect(src url.URL) bool {
 	return false
 }
 
-func (provder URLProvider) Resolve(ctx context.Context, source, version string) (Resolution, error) {
+func (provder URLProvider) Resolve(ctx context.Context, src url.URL, version string) (Resolution, error) {
 	panic("not implemented")
 }
