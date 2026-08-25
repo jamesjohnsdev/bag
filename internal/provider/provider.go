@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 )
 
@@ -18,14 +19,21 @@ type Provider interface {
 	Resolve(ctx context.Context, source, version string) (Resolution, error)
 }
 
-var registry = []Provider{}
+// buildReg generates the registry using constructors and inserts the httpclient
+func buildReg(client *http.Client) (registry []Provider) {
+	return []Provider{
+		NewGithubProvider(client),
+		NewURLProvider(client),
+	}
+}
 
 // Dispatch checks which provider is needed, and returns it
-func Dispatch(source string) (Provider, error) {
+func Dispatch(source string, client *http.Client) (Provider, error) {
 	srcUrl, err := url.Parse(source)
 	if err != nil {
 		return nil, fmt.Errorf("parsing URL: %w", err)
 	}
+	registry := buildReg(client)
 	for _, provider := range registry {
 		if provider.Detect(*srcUrl) {
 			return provider, nil
