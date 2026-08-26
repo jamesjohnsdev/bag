@@ -29,12 +29,12 @@ type GithubProvider struct {
 var _ Provider = (*GithubProvider)(nil)
 
 func NewGithubProvider(client *http.Client) (GithubProvider, error) {
-	var token string
-	token = config.Get().GhToken
-	ghClient, err := gh.NewClient(
-		gh.WithHTTPClient(client),
-		gh.WithAuthToken(token),
-	)
+	token := config.Get().GhToken
+	opts := []gh.ClientOptionsFunc{gh.WithHTTPClient(client)}
+	if token != "" {
+		opts = append(opts, gh.WithAuthToken(token))
+	}
+	ghClient, err := gh.NewClient(opts...)
 	if err != nil {
 		return GithubProvider{}, fmt.Errorf("creating github client: %w", err)
 	}

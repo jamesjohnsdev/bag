@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/url"
 	"path/filepath"
 
+	"github.com/jamesjohnsdev/bag/internal/httpclient"
 	"github.com/jamesjohnsdev/bag/internal/manifest"
+	"github.com/jamesjohnsdev/bag/internal/provider"
 	"github.com/jamesjohnsdev/bag/internal/store"
 )
 
@@ -15,10 +19,13 @@ type AddCmd struct {
 
 func (cmd *AddCmd) Run(ctx context.Context) error {
 	ws, err := workSpace()
+	if err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
 
 	var (
 		binName     string
-		version     string
+		version     string = "" // default to empty string
 		binaryEntry manifest.BinaryEntry
 		hash        string
 	)
@@ -39,9 +46,24 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 			Source:  cmd.Source,
 			Version: version,
 		}
+	} else {
+		client := httpclient.New()
+		provider, err := provider.Dispatch(cmd.Source, client)
+		if err != nil {
+			return fmt.Errorf("dispatching provider: %w", err)
+		}
+		src, err := url.Parse(cmd.Source)
+		if err != nil {
+			return fmt.Errorf("parsing source: %w", err)
+		}
+		// TODO: check version param if it exists
+		resolution, err := provider.Resolve(ctx, *src, version)
+		hash, err = store.InstallFromReader(resolution.BinaryName, resolution.ResolvedVersion, cmd.Source, resolution.Reader)
+		if err != nil {
+			return fmt.Errorf("installing from reader: %w", err)
+		}
 	}
 
-	// remote path
 	err = postInstall(ws.manPath, binName, version, hash, binaryEntry)
 	if err != nil {
 		return fmt.Errorf("post-install: %w", err)
