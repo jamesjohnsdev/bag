@@ -54,6 +54,12 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("resolving: %w", err)
 		}
+		if resolution.BinaryName == "" ||
+			resolution.BinaryName == "." ||
+			resolution.BinaryName == ".." ||
+			filepath.Base(resolution.BinaryName) != resolution.BinaryName {
+			return fmt.Errorf("invalid binary name: %q", resolution.BinaryName)
+		}
 		binName, version = resolution.BinaryName, resolution.ResolvedVersion
 		hash, err = store.InstallFromReader(binName, version, cmd.Source, resolution.Reader)
 		if err != nil {
