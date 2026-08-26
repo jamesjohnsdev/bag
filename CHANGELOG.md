@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/jamesjohnsdev/bag/compare/v0.1.2...v0.1.3) (2026-08-26)
+
+
+### Features
+
+* handle non-standard casing on runtimes ([69e4ff6](https://github.com/jamesjohnsdev/bag/commit/69e4ff67f1165c8fa4ccba23f2f1c1a1ab877925))
+
 ## [0.1.2](https://github.com/jamesjohnsdev/bag/compare/v0.1.1...v0.1.2) (2026-08-26)
 
 
