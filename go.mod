@@ -12,7 +12,6 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/alecthomas/kong v1.16.1
 	github.com/google/go-github/v89 v89.0.0
-	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd
 )
 
 require (
