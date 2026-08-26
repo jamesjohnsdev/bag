@@ -38,14 +38,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("installing locally: %w", err)
 		}
-		if err := store.LinkToPath(binName, version, ws.binDir); err != nil {
-			return fmt.Errorf("installing locally: %w", err)
-		}
 
-		binaryEntry = manifest.BinaryEntry{
-			Source:  cmd.Source,
-			Version: version,
-		}
 	} else {
 		client := httpclient.New()
 		provider, err := provider.Dispatch(cmd.Source, client)
@@ -66,6 +59,14 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("installing from reader: %w", err)
 		}
+	}
+	// TODO: consider moving this binaryEntry and LinkToPath to within postInstall
+	binaryEntry = manifest.BinaryEntry{
+		Source:  cmd.Source,
+		Version: version,
+	}
+	if err := store.LinkToPath(binName, version, ws.binDir); err != nil {
+		return fmt.Errorf("installing: %w", err)
 	}
 
 	err = postInstall(ws.manPath, binName, version, hash, binaryEntry)
