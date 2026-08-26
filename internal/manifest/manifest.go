@@ -12,6 +12,7 @@ type Manifest struct {
 	Binaries map[string]BinaryEntry
 }
 
+// TODO: change to Goa and set up sum type for `Type` field
 type BinaryEntry struct {
 	Source  string `toml:"source"`
 	Version string `toml:"version"`

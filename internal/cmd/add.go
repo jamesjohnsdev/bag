@@ -64,6 +64,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 	binaryEntry = manifest.BinaryEntry{
 		Source:  cmd.Source,
 		Version: version,
+		Type:    "binary",
 	}
 	if err := store.LinkToPath(binName, version, ws.binDir); err != nil {
 		return fmt.Errorf("installing: %w", err)
