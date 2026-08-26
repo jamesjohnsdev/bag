@@ -231,7 +231,7 @@ func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (res Resolution
 	}
 
 	for _, file := range zr.File {
-		if file.Mode()&0111 != 0 && isSafeArchiveBinaryName(file.Name) {
+		if file.Mode()&0o111 != 0 && isSafeArchiveBinaryName(file.Name) {
 			rc, err := file.Open()
 			if err != nil {
 				return Resolution{}, err
@@ -261,7 +261,7 @@ func extractTarball(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution
 		if err != nil {
 			return Resolution{}, fmt.Errorf("reading tar: %w", err)
 		}
-		if hdr.FileInfo().Mode()&0111 != 0 && isSafeArchiveBinaryName(hdr.Name) {
+		if hdr.FileInfo().Mode()&0o111 != 0 && isSafeArchiveBinaryName(hdr.Name) {
 			return Resolution{
 				Reader:          &tarCloser{rc, tr},
 				ResolvedVersion: release.GetTagName(),
