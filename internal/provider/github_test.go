@@ -122,10 +122,10 @@ func TestDetect(t *testing.T) {
 		src  string
 		want bool
 	}{
-		{"scheme-relative github", "//github.com/owner/repo", true},
+		{"scheme-less github shorthand", "github.com/owner/repo", true},
 		{"https github is direct url", "https://github.com/owner/repo", false},
 		{"http github is direct url", "http://github.com/owner/repo", false},
-		{"gitlab not github", "//gitlab.com/owner/repo", false},
+		{"gitlab not github", "gitlab.com/owner/repo", false},
 		{"direct https url", "https://example.com/binary", false},
 	}
 	for _, tt := range tests {
