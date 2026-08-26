@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/jamesjohnsdev/bag/internal/manifest"
@@ -15,45 +14,54 @@ type AddCmd struct {
 }
 
 func (cmd *AddCmd) Run() error {
-	// TODO: some of this could be moved else where as repeated logic
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("checking home dir: %w", err)
-	}
-	binDir := filepath.Join(homeDir, ".local/bin")
-	manPath, _, err := manifest.Get(false)
-	if err != nil {
-		return err
-	}
+	ws, err := workSpace()
 
+	var (
+		binName     string
+		version     string
+		binaryEntry manifest.BinaryEntry
+		hash        string
+	)
+
+	// download binary
 	if cmd.Local {
-		version := "local"
-		binName := filepath.Base(cmd.Source)
-		hash, err := store.InstallLocal(binName, version, cmd.Source)
+		version = "local"
+		binName = filepath.Base(cmd.Source)
+		hash, err = store.InstallLocal(binName, version, cmd.Source)
 		if err != nil {
 			return fmt.Errorf("installing locally: %w", err)
 		}
-		if err := store.LinkToPath(binName, version, binDir); err != nil {
+		if err := store.LinkToPath(binName, version, ws.binDir); err != nil {
 			return fmt.Errorf("installing locally: %w", err)
 		}
 
-		binaryEntry := manifest.BinaryEntry{
+		binaryEntry = manifest.BinaryEntry{
 			Source:  cmd.Source,
 			Version: version,
 		}
-		if err := manifest.AddBinary(manPath, binName, binaryEntry); err != nil {
-			return err
-		}
-		lockPath := manifest.FindLock(manPath)
-		lockEntry := manifest.LockEntry{
-			Version: version,
-			Hash:    hash,
-		}
-		if err := manifest.AddLockEntry(lockPath, binName, lockEntry); err != nil {
-			return err
-		}
-		fmt.Printf("installed %s successfully\n", binName)
 	}
+
 	// remote path
+	err = postInstall(ws.manPath, binName, version, hash, binaryEntry)
+	if err != nil {
+		return fmt.Errorf("post-install: %w", err)
+	}
+	fmt.Printf("installed %s successfully\n", binName)
+	return nil
+}
+
+// postInstall handles general chores required for manifest and lock after binary installation
+func postInstall(manPath, binName, version, hash string, binaryEntry manifest.BinaryEntry) error {
+	if err := manifest.AddBinary(manPath, binName, binaryEntry); err != nil {
+		return err
+	}
+	lockPath := manifest.FindLock(manPath)
+	lockEntry := manifest.LockEntry{
+		Version: version,
+		Hash:    hash,
+	}
+	if err := manifest.AddLockEntry(lockPath, binName, lockEntry); err != nil {
+		return err
+	}
 	return nil
 }
