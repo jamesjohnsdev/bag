@@ -20,10 +20,7 @@ func NewURLProvider(client *http.Client) URLProvider {
 }
 
 func (provider URLProvider) Detect(src url.URL) bool {
-	if DirectURL(src) {
-		return true
-	}
-	return false
+	return DirectURL(src)
 }
 
 func (provder URLProvider) Resolve(ctx context.Context, src url.URL, version string) (Resolution, error) {

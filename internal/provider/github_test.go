@@ -291,7 +291,11 @@ func TestExtractTarball(t *testing.T) {
 			if tt.wantErr {
 				return
 			}
-			defer res.Reader.Close()
+			defer func() {
+				if err := res.Reader.Close(); err != nil {
+					t.Fatal(err)
+				}
+			}()
 			if res.BinaryName != tt.wantBin {
 				t.Errorf("BinaryName = %q, want %q", res.BinaryName, tt.wantBin)
 			}
@@ -353,7 +357,11 @@ func TestExtractZip(t *testing.T) {
 			if tt.wantErr {
 				return
 			}
-			defer res.Reader.Close()
+			defer func() {
+				if err := res.Reader.Close(); err != nil {
+					t.Fatal(err)
+				}
+			}()
 			if res.BinaryName != tt.wantBin {
 				t.Errorf("BinaryName = %q, want %q", res.BinaryName, tt.wantBin)
 			}
@@ -374,10 +382,14 @@ func TestExtractZip(t *testing.T) {
 func TestGetRelease(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v3/repos/owner/repo/releases/latest", func(w http.ResponseWriter, _ *http.Request) {
-		json.NewEncoder(w).Encode(&gh.RepositoryRelease{TagName: "v2.0.0", ID: 2})
+		if err := json.NewEncoder(w).Encode(&gh.RepositoryRelease{TagName: "v2.0.0", ID: 2}); err != nil {
+			t.Error(err)
+		}
 	})
 	mux.HandleFunc("/api/v3/repos/owner/repo/releases/tags/v1.0.0", func(w http.ResponseWriter, _ *http.Request) {
-		json.NewEncoder(w).Encode(&gh.RepositoryRelease{TagName: "v1.0.0", ID: 1})
+		if err := json.NewEncoder(w).Encode(&gh.RepositoryRelease{TagName: "v1.0.0", ID: 1}); err != nil {
+			t.Error(err)
+		}
 	})
 
 	provider := newTestProvider(t, mux)

@@ -25,7 +25,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 
 	var (
 		binName     string
-		version     string = "" // default to empty string
+		version     string
 		binaryEntry manifest.BinaryEntry
 		hash        string
 	)

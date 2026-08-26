@@ -155,8 +155,12 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 	return "sha256:" + hashStr, nil
 }
 
-func InstallFromReader(name, version, source string, r io.ReadCloser) (string, error) {
-	defer r.Close()
+func InstallFromReader(name, version, source string, r io.ReadCloser) (result string, err error) {
+	defer func() {
+		if cerr := r.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing source reader: %w", cerr))
+		}
+	}()
 
 	if !isSafeName(name) {
 		return "", fmt.Errorf("invalid binary name: %q", name)
@@ -177,7 +181,11 @@ func InstallFromReader(name, version, source string, r io.ReadCloser) (string, e
 	if err != nil {
 		return "", fmt.Errorf("creating destination file: %w", err)
 	}
-	defer dstFile.Close()
+	defer func() {
+		if cerr := dstFile.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing destination file: %w", cerr))
+		}
+	}()
 
 	hash := sha256.New()
 	writer := io.MultiWriter(dstFile, hash)

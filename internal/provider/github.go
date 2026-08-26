@@ -178,8 +178,12 @@ func (t *tempFileCloser) Read(p []byte) (int, error) {
 
 func (t *tempFileCloser) Close() error {
 	err := t.rc.Close()
-	t.tmp.Close()
-	os.Remove(t.tmp.Name())
+	if cerr := t.tmp.Close(); cerr != nil {
+		err = errors.Join(err, fmt.Errorf("closing temp file: %w", cerr))
+	}
+	if rerr := os.Remove(t.tmp.Name()); rerr != nil {
+		err = errors.Join(err, fmt.Errorf("removing temp file: %w", rerr))
+	}
 	return err
 }
 
@@ -193,17 +197,23 @@ func isSafeArchiveBinaryName(name string) bool {
 	return filepath.Base(name) == name
 }
 
-func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution, error) {
+func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (res Resolution, err error) {
 	tmp, err := os.CreateTemp("", "bag-*.zip")
 	if err != nil {
 		return Resolution{}, fmt.Errorf("creating temp zip: %w", err)
 	}
 	cleanup := true
 	defer func() {
-		rc.Close()
+		if cerr := rc.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing archive reader: %w", cerr))
+		}
 		if cleanup {
-			tmp.Close()
-			os.Remove(tmp.Name())
+			if cerr := tmp.Close(); cerr != nil {
+				err = errors.Join(err, fmt.Errorf("closing temp zip: %w", cerr))
+			}
+			if rerr := os.Remove(tmp.Name()); rerr != nil {
+				err = errors.Join(err, fmt.Errorf("removing temp zip: %w", rerr))
+			}
 		}
 	}()
 	_, err = io.Copy(tmp, rc)
