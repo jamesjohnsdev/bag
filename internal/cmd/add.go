@@ -13,7 +13,7 @@ type AddCmd struct {
 	Source string `arg:"" help:"Path or remote source"`
 }
 
-func (cmd *AddCmd) Run() error {
+func (cmd *AddCmd) Run(ctx context.Context) error {
 	ws, err := workSpace()
 
 	var (
