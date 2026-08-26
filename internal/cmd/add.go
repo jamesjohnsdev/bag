@@ -58,6 +58,9 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		}
 		// TODO: check version param if it exists
 		resolution, err := provider.Resolve(ctx, *src, version)
+		if err != nil {
+			return fmt.Errorf("resolving: %w", err)
+		}
 		hash, err = store.InstallFromReader(resolution.BinaryName, resolution.ResolvedVersion, cmd.Source, resolution.Reader)
 		if err != nil {
 			return fmt.Errorf("installing from reader: %w", err)
