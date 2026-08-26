@@ -61,7 +61,8 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("resolving: %w", err)
 		}
-		hash, err = store.InstallFromReader(resolution.BinaryName, resolution.ResolvedVersion, cmd.Source, resolution.Reader)
+		binName, version = resolution.BinaryName, resolution.ResolvedVersion
+		hash, err = store.InstallFromReader(binName, version, cmd.Source, resolution.Reader)
 		if err != nil {
 			return fmt.Errorf("installing from reader: %w", err)
 		}
