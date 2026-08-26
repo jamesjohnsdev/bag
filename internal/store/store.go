@@ -161,6 +161,14 @@ func InstallFromReader(name, version, source string, r io.ReadCloser) (string, e
 	if !isSafeName(name) {
 		return "", fmt.Errorf("invalid binary name: %q", name)
 	}
+
+	if BinaryExists(name, version) {
+		metadata, err := ReadMetadata(name, version)
+		if err != nil {
+			return "", err
+		}
+		return "sha256:" + metadata.Hash, nil
+	}
 	if err := os.MkdirAll(EntryDir(name, version), 0o755); err != nil {
 		return "", fmt.Errorf("creating directory: %w", err)
 	}
