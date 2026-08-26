@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.2](https://github.com/jamesjohnsdev/bag/compare/v0.1.1...v0.1.2) (2026-08-26)
+
+
+### Features
+
+* base provider implementation ([b8b95cd](https://github.com/jamesjohnsdev/bag/commit/b8b95cda909d51e8a677d24e41e3864f3ca617c4))
+* config override support ([01444e2](https://github.com/jamesjohnsdev/bag/commit/01444e2492b651cb0787b024ccbb5a65f8d9ee2a))
+* github & directURL provider ([41a9179](https://github.com/jamesjohnsdev/bag/commit/41a91793022261cf0d96f0379d1b54be14af75e9))
+* github remote installs ([12486b8](https://github.com/jamesjohnsdev/bag/commit/12486b8fda6cb0a7b2433d40e617bde6fb7791e9))
+* httpclient shared contstructor ([e2af489](https://github.com/jamesjohnsdev/bag/commit/e2af48974c136b21c57f8b2d2db8780bd2fdb4cd))
+* implement github provider ([83f61a7](https://github.com/jamesjohnsdev/bag/commit/83f61a73392edc087c1e6d03fb10be54bce0fabe))
+* installation from reader ([0c280e5](https://github.com/jamesjohnsdev/bag/commit/0c280e5a00c16610d5b786b4ed3d8119bee586b0))
+
+
+### Bug Fixes
+
+* binary name and version not correctly amended after resolution ([c8d6e29](https://github.com/jamesjohnsdev/bag/commit/c8d6e294740f9f2aada1c0ac62fc14bb0c5e1d78))
+* check resolved names for traversal risk ([b747501](https://github.com/jamesjohnsdev/bag/commit/b7475013c1a50c1035edb0b3522034385e1cca22))
+* correctly parse and handle scheme-less paths ([69bb6b5](https://github.com/jamesjohnsdev/bag/commit/69bb6b509697cfabd580c37fa1df355da8461d3e))
+* correctly pass through context through kong bind ([284d1c2](https://github.com/jamesjohnsdev/bag/commit/284d1c29122185d8054f69c4f83d63357fbb1026))
+* err checking and golanglint-ci issues ([975f7e7](https://github.com/jamesjohnsdev/bag/commit/975f7e7d9b56577cd94e1f4019244434a377a16b))
+* explicitly set `Type` field to avoid potential ambiguity in `add` ([7fa2d81](https://github.com/jamesjohnsdev/bag/commit/7fa2d8130960adc5daa16e31efcaf727ae834319))
+* handle misformed config errors ([c9a0f20](https://github.com/jamesjohnsdev/bag/commit/c9a0f2041b7001ce85f3f27857ebfc9749cdacb1))
+* ignored err check was segfaulting on no matching system asset ([8862286](https://github.com/jamesjohnsdev/bag/commit/8862286ce57ce205076899ca0fca2f42dfbe958c))
+* InstallFromReader now allows reinstall of binary with same metadata ([b10bb79](https://github.com/jamesjohnsdev/bag/commit/b10bb79b25694c146359618dd9d90071efaba665))
+* sanitize file name to prevent file transversal risk ([6aff418](https://github.com/jamesjohnsdev/bag/commit/6aff418b26dd36756b744bc90dfcf7a0cb5f8c92))
+* sym linking logic moved so it applies to both local and provider options ([71771fe](https://github.com/jamesjohnsdev/bag/commit/71771fe3458d56b20268f0b0ee99e9b90a800b41))
+
 ## [0.1.1](https://github.com/jamesjohnsdev/bag/compare/v0.1.0...v0.1.1) (2026-08-24)
 
 
