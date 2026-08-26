@@ -118,7 +118,7 @@ func getReleaseAsset(release *gh.RepositoryRelease) (asset gh.ReleaseAsset, exte
 			continue
 		}
 		OS, arch := segments[2], segments[3]
-		if runtime.GOOS != OS {
+		if runtime.GOOS != strings.ToLower(OS) {
 			continue
 		}
 		if runtime.GOARCH == normaliseArch(arch) {
