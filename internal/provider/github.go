@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -182,6 +183,16 @@ func (t *tempFileCloser) Close() error {
 	return err
 }
 
+func isSafeArchiveBinaryName(name string) bool {
+	if name == "" || name == "." || name == ".." {
+		return false
+	}
+	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
+		return false
+	}
+	return filepath.Base(name) == name
+}
+
 func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution, error) {
 	tmp, err := os.CreateTemp("", "bag-*.zip")
 	if err != nil {
@@ -210,7 +221,7 @@ func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution, er
 	}
 
 	for _, file := range zr.File {
-		if file.Mode()&0111 != 0 && !strings.Contains(file.Name, "/") {
+		if file.Mode()&0111 != 0 && isSafeArchiveBinaryName(file.Name) {
 			rc, err := file.Open()
 			if err != nil {
 				return Resolution{}, err
@@ -240,8 +251,7 @@ func extractTarball(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution
 		if err != nil {
 			return Resolution{}, fmt.Errorf("reading tar: %w", err)
 		}
-		// find executable using permissions or name
-		if hdr.FileInfo().Mode()&0111 != 0 && !strings.Contains(hdr.Name, "/") {
+		if hdr.FileInfo().Mode()&0111 != 0 && isSafeArchiveBinaryName(hdr.Name) {
 			return Resolution{
 				Reader:          &tarCloser{rc, tr},
 				ResolvedVersion: release.GetTagName(),
