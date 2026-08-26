@@ -17,6 +17,8 @@ func ErrGlobeInit(err error) error {
 }
 
 // Get will find the path of the manifest file, and create the manifest and lock if missing.
+// if local = true is passed as a param, it will consider a local option first
+// if local = false is passed as a param, local check is skipped
 func Get(local bool) (path string, global bool, err error) {
 	path, global, err = findManifestPath(local)
 	if err != nil {
@@ -33,6 +35,8 @@ func Get(local bool) (path string, global bool, err error) {
 // if not found in recursive search, will default to home ~/.config/bag/
 // Specify whether local or global is wanted in param
 // returns path + boolean whether it is global manifest
+// if local = true is passed as a param, it will consider a local option first
+// if local = false is passed as a param, local check is skipped
 func findManifestPath(local bool) (path string, global bool, err error) {
 	if local {
 		workDir, err := os.Getwd()
@@ -60,6 +64,8 @@ func findManifestPath(local bool) (path string, global bool, err error) {
 	return filepath.Join(home, ".config", globDir, ManName), true, nil
 }
 
+// TODO: refactor FindLock and reuse similar to Get -> maybe GetLock
+
 // FindLock gets the path of the lockfile
 // It only returns the linked lockfile given a bag.toml path
 func FindLock(path string) string {
@@ -67,6 +73,8 @@ func FindLock(path string) string {
 	lockPath := filepath.Join(parentDir, lockName)
 	return lockPath
 }
+
+// TODO: Consider whether it's worthwhile to split this up so only the lock or the manifest are touched, not both
 
 // createIfMissing checks the manifest path, and if missing, creates a new manifest
 func createIfMissing(path string) error {
