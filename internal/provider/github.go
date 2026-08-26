@@ -45,7 +45,7 @@ func NewGithubProvider(client *http.Client) (GithubProvider, error) {
 }
 
 func (github GithubProvider) Detect(src url.URL) bool {
-	if !DirectURL(src) && src.Host == "github.com" {
+	if src.Host == "" && strings.HasPrefix(src.Path, "github.com/") {
 		return true
 	}
 	return false
@@ -53,7 +53,7 @@ func (github GithubProvider) Detect(src url.URL) bool {
 
 func (provider GithubProvider) Resolve(ctx context.Context, src url.URL, version string) (Resolution, error) {
 	// extract owner/repo from source
-	srcPath := strings.TrimPrefix(src.Path, "/")
+	srcPath := strings.TrimPrefix(src.Path, "github.com/")
 	path := strings.Split(srcPath, "/")
 	if len(path) < 2 {
 		return Resolution{}, errors.New("path does not include owner and respository")
