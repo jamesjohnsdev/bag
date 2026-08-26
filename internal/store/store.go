@@ -141,6 +141,45 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 	return "sha256:" + hashStr, nil
 }
 
+func InstallFromReader(name, version, source string, r io.ReadCloser) (string, error) {
+	defer r.Close()
+
+	if err := os.MkdirAll(EntryDir(name, version), 0o755); err != nil {
+		return "", fmt.Errorf("creating directory: %w", err)
+	}
+
+	dstFile, err := os.Create(BinaryPath(name, version))
+	if err != nil {
+		return "", fmt.Errorf("creating destination file: %w", err)
+	}
+	defer dstFile.Close()
+
+	hash := sha256.New()
+	writer := io.MultiWriter(dstFile, hash)
+	if _, err := io.Copy(writer, r); err != nil {
+		return "", fmt.Errorf("copying binary: %w", err)
+	}
+
+	hashStr := hex.EncodeToString(hash.Sum(nil))
+	if err = WriteMetadata(name, version, Metadata{
+		Source:      source,
+		Hash:        hashStr,
+		InstalledAt: time.Now(),
+	}); err != nil {
+		return "", fmt.Errorf("writing metadata: %w", err)
+	}
+
+	// 0555 = r-xr-xr-x
+	if err := os.Chmod(BinaryPath(name, version), 0o555); err != nil {
+		return "", fmt.Errorf("chmod binary: %w", err)
+	}
+	if err := os.Chmod(EntryDir(name, version), 0o555); err != nil {
+		return "", fmt.Errorf("chmod entry dir: %w", err)
+	}
+
+	return "sha256:" + hashStr, nil
+}
+
 // LinkToPath links a stored binary to path
 func LinkToPath(name, version, binDir string) error {
 	// 0755 = rwxr-xr-x
