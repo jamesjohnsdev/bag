@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -17,6 +18,16 @@ type Metadata struct {
 	Source      string    `toml:"source"`
 	Hash        string    `toml:"hash"`
 	InstalledAt time.Time `toml:"installed_at"`
+}
+
+func isSafeName(name string) bool {
+	if name == "" || name == "." || name == ".." {
+		return false
+	}
+	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
+		return false
+	}
+	return filepath.Base(name) == name
 }
 
 func Root() string {
@@ -88,6 +99,9 @@ func WriteMetadata(name, version string, metadata Metadata) error {
 // Install local adds a locally stored binary to a bag
 // hash returned with `sha256:` prefix
 func InstallLocal(name, version, srcPath string) (sha256hash string, err error) {
+	if !isSafeName(name) {
+		return "", fmt.Errorf("invalid bianry name: %q", name)
+	}
 	if BinaryExists(name, version) {
 		metadata, err := ReadMetadata(name, version)
 		if err != nil {
@@ -144,6 +158,9 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 func InstallFromReader(name, version, source string, r io.ReadCloser) (string, error) {
 	defer r.Close()
 
+	if !isSafeName(name) {
+		return "", fmt.Errorf("invalid binary name: %q", name)
+	}
 	if err := os.MkdirAll(EntryDir(name, version), 0o755); err != nil {
 		return "", fmt.Errorf("creating directory: %w", err)
 	}
@@ -182,6 +199,9 @@ func InstallFromReader(name, version, source string, r io.ReadCloser) (string, e
 
 // LinkToPath links a stored binary to path
 func LinkToPath(name, version, binDir string) error {
+	if !isSafeName(name) {
+		return fmt.Errorf("invalid binary name: %q", name)
+	}
 	// 0755 = rwxr-xr-x
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		return fmt.Errorf("creating bin dir: %w", err)
