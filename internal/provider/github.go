@@ -112,7 +112,10 @@ func getReleaseAsset(release *gh.RepositoryRelease) (asset gh.ReleaseAsset, exte
 			ext, base = "tar.gz", name[:len(name)-7]
 		case strings.HasSuffix(name, ".zip"):
 			ext, base = "zip", name[:len(name)-4]
+		case nameMatchesBinary(name): // keep at bottom - could mistake unusual extensions
+			ext, base = "", name
 		default:
+			// unrecognised extensions should fall through here
 			continue
 		}
 		if matchesSystem(base, "_") || matchesSystem(base, "-") {
@@ -135,21 +138,29 @@ func (provider GithubProvider) downloadReleaseAsset(
 	if err != nil {
 		return Resolution{}, fmt.Errorf("downloading release asset %s: %w", asset.GetName(), err)
 	}
-	if extension == "zip" {
+	defer func() {
+		err = errors.Join(rc.Close(), err)
+	}()
+	switch extension {
+	case "":
+		res, err := useRawBinary(rc, asset.GetName(), release)
+		if err != nil {
+			return Resolution{}, fmt.Errorf("using raw binary %s: %w", asset.GetName(), err)
+		}
+		return res, nil
+	case "zip":
 		res, err := extractZip(rc, release)
 		if err != nil {
 			return Resolution{}, fmt.Errorf("extracting zip %s: %w", asset.GetName(), err)
 		}
 		return res, nil
-	}
-	if extension == "tar.gz" {
+	case "tar.gz":
 		res, err := extractTarball(rc, release)
 		if err != nil {
 			return Resolution{}, fmt.Errorf("extracting tarball %s: %w", asset.GetName(), err)
 		}
 		return res, nil
 	}
-
 	return Resolution{}, fmt.Errorf("release asset type not supported: %s", extension)
 }
 
@@ -277,6 +288,17 @@ func extractTarball(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution
 	return Resolution{}, errors.New("no executable found in archive")
 }
 
+func useRawBinary(rc io.ReadCloser, name string, release *gh.RepositoryRelease) (Resolution, error) {
+	if !isSafeBinaryName(name) {
+		return Resolution{}, fmt.Errorf("unsafe binary name: %s", name)
+	}
+	return Resolution{
+		Reader:          rc,
+		ResolvedVersion: release.GetTagName(),
+		BinaryName:      name,
+	}, nil
+}
+
 // matchesSystem reports whether base (a release asset name with its extension
 // stripped) encodes the current OS/arch using sep as its segment separator.
 // OS and arch are taken as the trailing two segments, so tool names/versions
@@ -313,4 +335,14 @@ func normaliseArch(arch string) string {
 	default:
 		return arch
 	}
+}
+
+// nameMatchesBinary parses a given string and returns true if recognised as a binary
+// This does not mean the file is actually a binary, but just the naming matches
+// Extensions should be checked prior to this running, as it's possible it will mistake more complex extension types
+func nameMatchesBinary(name string) bool {
+	if ext := path.Ext(name); ext == "" || strings.ContainsAny(ext, "_-") {
+		return true
+	}
+	return false
 }
