@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.4](https://github.com/jamesjohnsdev/bag/compare/v0.1.3...v0.1.4) (2026-08-27)
+
+
+### Features
+
+* support direct binary releases from github ([9b96412](https://github.com/jamesjohnsdev/bag/commit/9b96412015a7c7f063d2022566ac0f5d684803a3))
+* support hython separators in release names ([4469bc8](https://github.com/jamesjohnsdev/bag/commit/4469bc8b07df6e824bf31343257dfdf7cd9c88cd))
+
+
+### Bug Fixes
+
+* enable support for nested archives ([6c180c0](https://github.com/jamesjohnsdev/bag/commit/6c180c04faf22c7fe21756a64995536a25d77302))
+* pass correct name for binary installs ([667292d](https://github.com/jamesjohnsdev/bag/commit/667292d2a142168b7335cb13667cb57c663fadc6))
+* regression from hython support where system type dropped when cotnaining an underscore ([bef3aea](https://github.com/jamesjohnsdev/bag/commit/bef3aea670b49365233d423243e4da4d8d4d71af))
+* remove early close and give ownership to later callers ([554360e](https://github.com/jamesjohnsdev/bag/commit/554360e9b1ed655241d99a52d5c9833fbfbe1f9d))
+
 ## [0.1.3](https://github.com/jamesjohnsdev/bag/compare/v0.1.2...v0.1.3) (2026-08-26)
 
 
