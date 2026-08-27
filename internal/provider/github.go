@@ -141,7 +141,7 @@ func (provider GithubProvider) downloadReleaseAsset(
 	// intentionally not closing rc here: ownership should pass to whatever is returned in Resolution.Reader
 	switch extension {
 	case "":
-		res, err := useRawBinary(rc, asset.GetName(), release)
+		res, err := useRawBinary(rc, repo, release)
 		if err != nil {
 			return Resolution{}, fmt.Errorf("using raw binary %s: %w", asset.GetName(), err)
 		}
