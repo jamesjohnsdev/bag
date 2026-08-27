@@ -115,18 +115,7 @@ func getReleaseAsset(release *gh.RepositoryRelease) (asset gh.ReleaseAsset, exte
 		default:
 			continue
 		}
-		segments := strings.Split(base, "_")
-		if len(segments) < 4 {
-			segments = strings.Split(base, "-")
-			if len(segments) < 4 {
-				continue
-			}
-		}
-		OS, arch := segments[len(segments)-2], segments[len(segments)-1]
-		if runtime.GOOS != strings.ToLower(OS) {
-			continue
-		}
-		if runtime.GOARCH == normaliseArch(arch) {
+		if matchesSystem(base, "_") || matchesSystem(base, "-") {
 			return *asset, ext, nil
 		}
 	}
@@ -286,6 +275,30 @@ func extractTarball(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution
 		}, nil
 	}
 	return Resolution{}, errors.New("no executable found in archive")
+}
+
+// matchesSystem reports whether base (a release asset name with its extension
+// stripped) encodes the current OS/arch using sep as its segment separator.
+// OS and arch are taken as the trailing two segments, so tool names/versions
+// may themselves contain the separator character. Some arch aliases (e.g.
+// "x86_64") contain an underscore of their own, which collides with "_" as
+// the segment separator, so arch is also tried as the last two segments
+// joined back together (e.g. "x86" + "_" + "64").
+func matchesSystem(base, sep string) bool {
+	segments := strings.Split(base, sep)
+	if len(segments) < 4 {
+		return false
+	}
+	OS, arch := segments[len(segments)-2], segments[len(segments)-1]
+	if runtime.GOOS == strings.ToLower(OS) && runtime.GOARCH == normaliseArch(arch) {
+		return true
+	}
+	if len(segments) < 5 {
+		return false
+	}
+	OS = segments[len(segments)-3]
+	arch = segments[len(segments)-2] + sep + segments[len(segments)-1]
+	return runtime.GOOS == strings.ToLower(OS) && runtime.GOARCH == normaliseArch(arch)
 }
 
 // normaliseArch takes an arch string and normalises alternative cases to be consistent with GOARCH
