@@ -100,7 +100,9 @@ func (provider GithubProvider) getRelease(ctx context.Context, owner, repo, vers
 }
 
 // getReleaseAsset parses and returns the most appropriate release asset based on the system attributes
-// supports conventional asset naming: e.g. `goanna_0.2.1_darwin_amd64.tar.gz"
+// supports conventional asset naming with underscore or hyphen separators, e.g. `goanna_0.2.1_darwin_amd64.tar.gz`
+// or `golangci-lint-2.13.1-linux-amd64.tar.gz`. OS and arch are taken as the last two separator-delimited
+// segments so tool names/versions may themselves contain the separator character.
 func getReleaseAsset(release *gh.RepositoryRelease) (asset gh.ReleaseAsset, extension string, err error) {
 	for _, asset := range release.Assets {
 		name := asset.GetName()
@@ -113,11 +115,14 @@ func getReleaseAsset(release *gh.RepositoryRelease) (asset gh.ReleaseAsset, exte
 		default:
 			continue
 		}
-		segments := strings.SplitN(base, "_", 4)
-		if len(segments) != 4 {
-			continue
+		segments := strings.Split(base, "_")
+		if len(segments) < 4 {
+			segments = strings.Split(base, "-")
+			if len(segments) < 4 {
+				continue
+			}
 		}
-		OS, arch := segments[2], segments[3]
+		OS, arch := segments[len(segments)-2], segments[len(segments)-1]
 		if runtime.GOOS != strings.ToLower(OS) {
 			continue
 		}
