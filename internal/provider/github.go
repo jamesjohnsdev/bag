@@ -75,9 +75,9 @@ func (provider GithubProvider) Resolve(ctx context.Context, src url.URL, version
 		return Resolution{}, fmt.Errorf("getting release asset: %w", err)
 	}
 	// download winning asset, stream body into Resolution.Reader
-	res, err := provider.downloadReleaseAsset(ctx, extension, owner, repo, asset.GetID(), release, provider.Client.Client())
+	res, err := provider.downloadReleaseAsset(ctx, extension, owner, repo, asset, release, provider.Client.Client())
 	if err != nil {
-		return Resolution{}, fmt.Errorf("downloading asset: %w", err)
+		return Resolution{}, fmt.Errorf("downloading asset %s: %w", asset.GetName(), err)
 	}
 	return res, nil
 }
@@ -138,25 +138,25 @@ func (provider GithubProvider) downloadReleaseAsset(
 	extension,
 	owner,
 	repo string,
-	id int64,
+	asset gh.ReleaseAsset,
 	release *gh.RepositoryRelease,
 	client *http.Client,
 ) (Resolution, error) {
-	rc, _, err := provider.Client.Repositories.DownloadReleaseAsset(ctx, owner, repo, id, client)
+	rc, _, err := provider.Client.Repositories.DownloadReleaseAsset(ctx, owner, repo, asset.GetID(), client)
 	if err != nil {
-		return Resolution{}, fmt.Errorf("downloading release asset: %w", err)
+		return Resolution{}, fmt.Errorf("downloading release asset %s: %w", asset.GetName(), err)
 	}
 	if extension == "zip" {
 		res, err := extractZip(rc, release)
 		if err != nil {
-			return Resolution{}, fmt.Errorf("extracting zip: %w", err)
+			return Resolution{}, fmt.Errorf("extracting zip %s: %w", asset.GetName(), err)
 		}
 		return res, nil
 	}
 	if extension == "tar.gz" {
 		res, err := extractTarball(rc, release)
 		if err != nil {
-			return Resolution{}, fmt.Errorf("extracting tarball: %w", err)
+			return Resolution{}, fmt.Errorf("extracting tarball %s: %w", asset.GetName(), err)
 		}
 		return res, nil
 	}
@@ -239,7 +239,7 @@ func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (res Resolution
 		if file.Mode()&0o111 != 0 && isSafeArchiveBinaryName(file.Name) {
 			rc, err := file.Open()
 			if err != nil {
-				return Resolution{}, err
+				return Resolution{}, fmt.Errorf("opening file %s: %w", file.Name, err)
 			}
 			cleanup = false
 			return Resolution{
