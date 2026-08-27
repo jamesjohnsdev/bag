@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
+	"path"
 	"runtime"
 	"strings"
 
@@ -192,14 +192,15 @@ func (t *tempFileCloser) Close() error {
 	return err
 }
 
-func isSafeArchiveBinaryName(name string) bool {
+// isSafeBinaryName reports whether name is safe to use as the filename of an
+// installed binary. It is applied to the base name of an archive entry, so
+// entries nested in subdirectories (e.g. a release tarball that wraps its
+// contents in a "tool-1.0.0-linux-amd64/" directory) can still be matched.
+func isSafeBinaryName(name string) bool {
 	if name == "" || name == "." || name == ".." {
 		return false
 	}
-	if strings.Contains(name, "/") || strings.Contains(name, "\\") {
-		return false
-	}
-	return filepath.Base(name) == name
+	return !strings.ContainsAny(name, "/\\")
 }
 
 func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (res Resolution, err error) {
@@ -236,18 +237,23 @@ func extractZip(rc io.ReadCloser, release *gh.RepositoryRelease) (res Resolution
 	}
 
 	for _, file := range zr.File {
-		if file.Mode()&0o111 != 0 && isSafeArchiveBinaryName(file.Name) {
-			rc, err := file.Open()
-			if err != nil {
-				return Resolution{}, fmt.Errorf("opening file %s: %w", file.Name, err)
-			}
-			cleanup = false
-			return Resolution{
-				Reader:          &tempFileCloser{rc, tmp},
-				ResolvedVersion: release.GetTagName(),
-				BinaryName:      file.Name,
-			}, nil
+		if file.FileInfo().IsDir() || file.Mode()&0o111 == 0 {
+			continue
 		}
+		base := path.Base(file.Name)
+		if !isSafeBinaryName(base) {
+			continue
+		}
+		rc, err := file.Open()
+		if err != nil {
+			return Resolution{}, fmt.Errorf("opening file %s: %w", file.Name, err)
+		}
+		cleanup = false
+		return Resolution{
+			Reader:          &tempFileCloser{rc, tmp},
+			ResolvedVersion: release.GetTagName(),
+			BinaryName:      base,
+		}, nil
 	}
 	return Resolution{}, errors.New("no executable found in archive")
 }
@@ -266,13 +272,18 @@ func extractTarball(rc io.ReadCloser, release *gh.RepositoryRelease) (Resolution
 		if err != nil {
 			return Resolution{}, fmt.Errorf("reading tar: %w", err)
 		}
-		if hdr.FileInfo().Mode()&0o111 != 0 && isSafeArchiveBinaryName(hdr.Name) {
-			return Resolution{
-				Reader:          &tarCloser{rc, tr},
-				ResolvedVersion: release.GetTagName(),
-				BinaryName:      hdr.Name,
-			}, nil
+		if hdr.Typeflag != tar.TypeReg || hdr.FileInfo().Mode()&0o111 == 0 {
+			continue
 		}
+		base := path.Base(hdr.Name)
+		if !isSafeBinaryName(base) {
+			continue
+		}
+		return Resolution{
+			Reader:          &tarCloser{rc, tr},
+			ResolvedVersion: release.GetTagName(),
+			BinaryName:      base,
+		}, nil
 	}
 	return Resolution{}, errors.New("no executable found in archive")
 }

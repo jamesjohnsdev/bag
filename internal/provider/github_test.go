@@ -262,9 +262,9 @@ func TestExtractTarball(t *testing.T) {
 			wantBin: "mybinary",
 		},
 		{
-			name:    "executable in subdir skipped",
+			name:    "executable in subdir found",
 			entries: []tarEntry{{name: "subdir/mybinary", mode: 0o755, content: "ELF"}},
-			wantErr: true,
+			wantBin: "mybinary",
 		},
 		{
 			name:    "non-executable ignored",
@@ -328,9 +328,9 @@ func TestExtractZip(t *testing.T) {
 			wantBin: "mybinary",
 		},
 		{
-			name:    "executable in subdir skipped",
+			name:    "executable in subdir found",
 			entries: []zipEntry{{name: "subdir/mybinary", mode: 0o755, content: "ELF"}},
-			wantErr: true,
+			wantBin: "mybinary",
 		},
 		{
 			name:    "no executable",
