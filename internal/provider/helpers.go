@@ -82,7 +82,15 @@ func extractZip(rc io.ReadCloser, binName, version string) (res Resolution, err 
 	return Resolution{}, errors.New("no executable found in archive")
 }
 
-func extractTarball(rc io.ReadCloser, binName, version string) (Resolution, error) {
+func extractTarball(rc io.ReadCloser, binName, version string) (res Resolution, err error) {
+	cleanup := true
+	defer func() {
+		if cleanup {
+			if cerr := rc.Close(); cerr != nil {
+				err = errors.Join(err, fmt.Errorf("closing archive reader: %w", cerr))
+			}
+		}
+	}()
 	gz, err := gzip.NewReader(rc)
 	if err != nil {
 		return Resolution{}, fmt.Errorf("gzip reader: %w", err)
@@ -106,6 +114,7 @@ func extractTarball(rc io.ReadCloser, binName, version string) (Resolution, erro
 		if binName != "" {
 			base = binName
 		}
+		cleanup = false
 		return Resolution{
 			Reader:          &tarCloser{rc, tr},
 			ResolvedVersion: version,
