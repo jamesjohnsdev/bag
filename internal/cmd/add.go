@@ -40,7 +40,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 			version = cmd.Version
 		}
 		if cmd.Name != "" {
-			binName = cmd.Version
+			binName = cmd.Name
 		}
 		hash, err = store.InstallLocal(binName, version, cmd.Source)
 		if err != nil {
