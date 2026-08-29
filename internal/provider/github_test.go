@@ -248,8 +248,6 @@ func TestGetReleaseAssetArchAlias(t *testing.T) {
 }
 
 func TestExtractTarball(t *testing.T) {
-	release := &gh.RepositoryRelease{TagName: "v1.0.0"}
-
 	tests := []struct {
 		name    string
 		entries []tarEntry
@@ -284,7 +282,7 @@ func TestExtractTarball(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rc := makeTarGz(t, tt.entries)
-			res, err := extractTarball(rc, release)
+			res, err := extractTarball(rc, "", "v1.0.0")
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("extractTarball() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -314,8 +312,6 @@ func TestExtractTarball(t *testing.T) {
 }
 
 func TestExtractZip(t *testing.T) {
-	release := &gh.RepositoryRelease{TagName: "v1.0.0"}
-
 	tests := []struct {
 		name    string
 		entries []zipEntry
@@ -350,7 +346,7 @@ func TestExtractZip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rc := makeZip(t, tt.entries)
-			res, err := extractZip(rc, release)
+			res, err := extractZip(rc, "", "v1.0.0")
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("extractZip() error = %v, wantErr %v", err, tt.wantErr)
 			}
