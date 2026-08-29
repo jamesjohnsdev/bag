@@ -102,6 +102,9 @@ func InstallLocal(name, version, srcPath string) (sha256hash string, err error) 
 	if !isSafeName(name) {
 		return "", fmt.Errorf("invalid bianry name: %q", name)
 	}
+	if !isSafeName(version) {
+		return "", fmt.Errorf("invalid version: %q", version)
+	}
 	if BinaryExists(name, version) {
 		metadata, err := ReadMetadata(name, version)
 		if err != nil {
@@ -165,6 +168,9 @@ func InstallFromReader(name, version, source string, r io.ReadCloser) (result st
 	if !isSafeName(name) {
 		return "", fmt.Errorf("invalid binary name: %q", name)
 	}
+	if !isSafeName(version) {
+		return "", fmt.Errorf("invalid version: %q", version)
+	}
 
 	if BinaryExists(name, version) {
 		metadata, err := ReadMetadata(name, version)
@@ -217,6 +223,9 @@ func InstallFromReader(name, version, source string, r io.ReadCloser) (result st
 func LinkToPath(name, version, binDir string) error {
 	if !isSafeName(name) {
 		return fmt.Errorf("invalid binary name: %q", name)
+	}
+	if !isSafeName(version) {
+		return fmt.Errorf("invalid version: %q", version)
 	}
 	// 0755 = rwxr-xr-x
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
