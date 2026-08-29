@@ -45,7 +45,7 @@ func (github GithubProvider) Detect(src url.URL) bool {
 	return false
 }
 
-func (provider GithubProvider) Resolve(ctx context.Context, src url.URL, version string) (Resolution, error) {
+func (provider GithubProvider) Resolve(ctx context.Context, src url.URL, binName, version string) (Resolution, error) {
 	// extract owner/repo from source
 	srcPath := strings.TrimPrefix(src.Path, "github.com/")
 	path := strings.Split(srcPath, "/")
@@ -99,20 +99,12 @@ func (provider GithubProvider) getRelease(ctx context.Context, owner, repo, vers
 func getReleaseAsset(release *gh.RepositoryRelease) (asset gh.ReleaseAsset, extension string, err error) {
 	for _, asset := range release.Assets {
 		name := asset.GetName()
-		var ext, base string
-		switch {
-		case strings.HasSuffix(name, ".tar.gz"):
-			ext, base = "tar.gz", name[:len(name)-7]
-		case strings.HasSuffix(name, ".zip"):
-			ext, base = "zip", name[:len(name)-4]
-		case nameMatchesBinary(name): // keep at bottom - could mistake unusual extensions
-			ext, base = "", name
-		default:
-			// unrecognised extensions should fall through here
+		extension, base, err := parseAssetName(name)
+		if err != nil {
 			continue
 		}
 		if matchesSystem(base, "_") || matchesSystem(base, "-") {
-			return *asset, ext, nil
+			return *asset, extension, nil
 		}
 	}
 	return gh.ReleaseAsset{}, "", errors.New("no asset matching system")

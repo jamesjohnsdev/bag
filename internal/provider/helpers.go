@@ -24,7 +24,7 @@ func isSafeBinaryName(name string) bool {
 	return !strings.ContainsAny(name, "/\\")
 }
 
-func extractZip(rc io.ReadCloser, version string) (res Resolution, err error) {
+func extractZip(rc io.ReadCloser, binName, version string) (res Resolution, err error) {
 	tmp, err := os.CreateTemp("", "bag-*.zip")
 	if err != nil {
 		return Resolution{}, fmt.Errorf("creating temp zip: %w", err)
@@ -65,6 +65,9 @@ func extractZip(rc io.ReadCloser, version string) (res Resolution, err error) {
 		if !isSafeBinaryName(base) {
 			continue
 		}
+		if binName != "" {
+			base = binName
+		}
 		rc, err := file.Open()
 		if err != nil {
 			return Resolution{}, fmt.Errorf("opening file %s: %w", file.Name, err)
@@ -79,7 +82,7 @@ func extractZip(rc io.ReadCloser, version string) (res Resolution, err error) {
 	return Resolution{}, errors.New("no executable found in archive")
 }
 
-func extractTarball(rc io.ReadCloser, version string) (Resolution, error) {
+func extractTarball(rc io.ReadCloser, binName, version string) (Resolution, error) {
 	gz, err := gzip.NewReader(rc)
 	if err != nil {
 		return Resolution{}, fmt.Errorf("gzip reader: %w", err)
@@ -99,6 +102,9 @@ func extractTarball(rc io.ReadCloser, version string) (Resolution, error) {
 		base := path.Base(hdr.Name)
 		if !isSafeBinaryName(base) {
 			continue
+		}
+		if binName != "" {
+			base = binName
 		}
 		return Resolution{
 			Reader:          &tarCloser{rc, tr},
@@ -178,13 +184,13 @@ func handleAssetVariations(rc io.ReadCloser, binName, version, extension string)
 		}
 		return res, nil
 	case "zip":
-		res, err := extractZip(rc, version)
+		res, err := extractZip(rc, binName, version)
 		if err != nil {
 			return Resolution{}, fmt.Errorf("extracting zip %s: %w", binName, err)
 		}
 		return res, nil
 	case "tar.gz":
-		res, err := extractTarball(rc, version)
+		res, err := extractTarball(rc, binName, version)
 		if err != nil {
 			return Resolution{}, fmt.Errorf("extracting tarball %s: %w", binName, err)
 		}
@@ -220,4 +226,18 @@ func (t *tempFileCloser) Close() error {
 		err = errors.Join(err, fmt.Errorf("removing temp file: %w", rerr))
 	}
 	return err
+}
+
+func parseAssetName(name string) (ext, base string, err error) {
+	switch {
+	case strings.HasSuffix(name, ".tar.gz"):
+		ext, base = "tar.gz", name[:len(name)-7]
+	case strings.HasSuffix(name, ".zip"):
+		ext, base = "zip", name[:len(name)-4]
+	case nameMatchesBinary(name): // keep at bottom - could mistake unusual extensions
+		ext, base = "", name
+	default:
+		return "", "", fmt.Errorf("file %s doesn't match known type")
+	}
+	return ext, base, nil
 }
