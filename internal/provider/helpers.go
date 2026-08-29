@@ -237,7 +237,7 @@ func parseAssetName(name string) (ext, base string, err error) {
 	case nameMatchesBinary(name): // keep at bottom - could mistake unusual extensions
 		ext, base = "", name
 	default:
-		return "", "", fmt.Errorf("file %s doesn't match known type")
+		return "", "", fmt.Errorf("file %s doesn't match known type", name)
 	}
 	return ext, base, nil
 }
