@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -48,8 +49,10 @@ func TestURLProviderResolve(t *testing.T) {
 		mux := http.NewServeMux()
 		mux.HandleFunc("/tool.tar.gz", func(w http.ResponseWriter, _ *http.Request) {
 			rc := makeTarGz(t, []tarEntry{{name: "tool", mode: 0o755, content: "ELF"}})
-			defer rc.Close()
-			data, _ := io.ReadAll(rc)
+			data, readErr := io.ReadAll(rc)
+			if err := errors.Join(readErr, rc.Close()); err != nil {
+				t.Error(err)
+			}
 			_, _ = w.Write(data)
 		})
 		p, srv := newTestURLProvider(t, mux)
@@ -58,14 +61,16 @@ func TestURLProviderResolve(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer res.Reader.Close()
 		if res.BinaryName != "tool" {
 			t.Errorf("BinaryName = %q, want tool", res.BinaryName)
 		}
 		if res.ResolvedVersion != "v1.0.0" {
 			t.Errorf("ResolvedVersion = %q, want v1.0.0", res.ResolvedVersion)
 		}
-		content, _ := io.ReadAll(res.Reader)
+		content, readErr := io.ReadAll(res.Reader)
+		if err := errors.Join(readErr, res.Reader.Close()); err != nil {
+			t.Error(err)
+		}
 		if string(content) != "ELF" {
 			t.Errorf("content = %q, want ELF", string(content))
 		}
@@ -75,8 +80,10 @@ func TestURLProviderResolve(t *testing.T) {
 		mux := http.NewServeMux()
 		mux.HandleFunc("/tool.zip", func(w http.ResponseWriter, _ *http.Request) {
 			rc := makeZip(t, []zipEntry{{name: "tool", mode: 0o755, content: "ELF"}})
-			defer rc.Close()
-			data, _ := io.ReadAll(rc)
+			data, readErr := io.ReadAll(rc)
+			if err := errors.Join(readErr, rc.Close()); err != nil {
+				t.Error(err)
+			}
 			_, _ = w.Write(data)
 		})
 		p, srv := newTestURLProvider(t, mux)
@@ -85,7 +92,11 @@ func TestURLProviderResolve(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer res.Reader.Close()
+		defer func() {
+			if err := res.Reader.Close(); err != nil {
+				t.Error(err)
+			}
+		}()
 		if res.BinaryName != "tool" {
 			t.Errorf("BinaryName = %q, want tool", res.BinaryName)
 		}
@@ -105,11 +116,13 @@ func TestURLProviderResolve(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer res.Reader.Close()
+		content, readErr := io.ReadAll(res.Reader)
+		if err := errors.Join(readErr, res.Reader.Close()); err != nil {
+			t.Error(err)
+		}
 		if res.BinaryName != "tool" {
 			t.Errorf("BinaryName = %q, want tool", res.BinaryName)
 		}
-		content, _ := io.ReadAll(res.Reader)
 		if string(content) != "ELF" {
 			t.Errorf("content = %q, want ELF", string(content))
 		}
