@@ -13,8 +13,10 @@ import (
 )
 
 type AddCmd struct {
-	Local  bool   `flag:"" help:"Install a local binary"`
-	Source string `arg:"" help:"Path or remote source"`
+	Source  string `arg:"" help:"Path or remote source"`
+	Local   bool   `flag:"" help:"Install a local binary"`
+	Name    string `flag:"" help:"Override the name of the binary"`
+	Version string `flag:"" help:"If direct link or local, set the version, otherwise choose version to download"`
 }
 
 func (cmd *AddCmd) Run(ctx context.Context) error {
@@ -34,6 +36,12 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 	if cmd.Local {
 		version = "local"
 		binName = filepath.Base(cmd.Source)
+		if cmd.Version != "" {
+			version = cmd.Version
+		}
+		if cmd.Name != "" {
+			binName = cmd.Version
+		}
 		hash, err = store.InstallLocal(binName, version, cmd.Source)
 		if err != nil {
 			return fmt.Errorf("installing locally: %w", err)
@@ -49,8 +57,13 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("parsing source: %w", err)
 		}
-		// TODO: check version param if it exists
-		resolution, err := provider.Resolve(ctx, *src, version)
+		if cmd.Version != "" {
+			version = cmd.Version
+		}
+		if cmd.Name != "" {
+			binName = cmd.Name
+		}
+		resolution, err := provider.Resolve(ctx, *src, binName, version)
 		if err != nil {
 			return fmt.Errorf("resolving: %w", err)
 		}

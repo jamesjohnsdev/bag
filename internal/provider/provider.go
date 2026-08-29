@@ -16,7 +16,7 @@ type Resolution struct {
 
 type Provider interface {
 	Detect(src url.URL) bool
-	Resolve(ctx context.Context, src url.URL, version string) (Resolution, error)
+	Resolve(ctx context.Context, src url.URL, binName, version string) (Resolution, error)
 }
 
 // buildReg generates the registry using constructors and inserts the httpclient
