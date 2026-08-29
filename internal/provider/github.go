@@ -68,7 +68,7 @@ func (provider GithubProvider) Resolve(ctx context.Context, src url.URL, binName
 		return Resolution{}, fmt.Errorf("getting release asset: %w", err)
 	}
 	// download winning asset, stream body into Resolution.Reader
-	res, err := provider.downloadReleaseAsset(ctx, extension, owner, repo, asset.GetID(), asset.GetName(), release.GetTagName(), provider.Client.Client())
+	res, err := provider.downloadReleaseAsset(ctx, extension, owner, repo, asset.GetID(), binName, release.GetTagName(), provider.Client.Client())
 	if err != nil {
 		return Resolution{}, fmt.Errorf("downloading asset %s: %w", asset.GetName(), err)
 	}
