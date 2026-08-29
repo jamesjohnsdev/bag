@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.5](https://github.com/jamesjohnsdev/bag/compare/v0.1.4...v0.1.5) (2026-08-29)
+
+
+### Features
+
+* url provider ([b5c4d03](https://github.com/jamesjohnsdev/bag/commit/b5c4d03347f62504272d050985fe0ee96cd51e3a))
+
+
+### Bug Fixes
+
+* **cmd:** use name flag override, not version ([9934f33](https://github.com/jamesjohnsdev/bag/commit/9934f3391284bd81e8883ce58663ca6265c98535))
+* **provider:** close rc on every extractTarball error path ([6c40e47](https://github.com/jamesjohnsdev/bag/commit/6c40e47272917cd39b528a4be5d12f09f3013000))
+* **provider:** honor ctx, status code, and default name in URLProvider ([4037bcd](https://github.com/jamesjohnsdev/bag/commit/4037bcd5c78559d6eba4fd559b0f4fe953f74fbf))
+* **provider:** pass caller binName to downloadReleaseAsset ([0c9b6b3](https://github.com/jamesjohnsdev/bag/commit/0c9b6b36684ad7c2459d0bc50b765d58ec7ce213))
+* **store:** validate version against path traversal ([f269c2d](https://github.com/jamesjohnsdev/bag/commit/f269c2d5cbd1cd8528b61987900cb225c2cd6b2b))
+
 ## [0.1.4](https://github.com/jamesjohnsdev/bag/compare/v0.1.3...v0.1.4) (2026-08-27)
 
 
