@@ -26,13 +26,19 @@ func (c *ManInstallCmd) Run(ctx *kong.Context) error {
 }
 
 func installManPage(model *kong.Application) (dest string, err error) {
-	man := mangokong.NewManPage(1, model)
-
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(home, ".local", "share", "man", "man1")
+	return RenderManPage(model, filepath.Join(home, ".local", "share", "man", "man1"))
+}
+
+// RenderManPage renders the man page for model into dir/bag.1, creating dir
+// if needed. Exported for use by the release build's man page generator,
+// which has no user home directory to install into.
+func RenderManPage(model *kong.Application, dir string) (dest string, err error) {
+	man := mangokong.NewManPage(1, model)
+
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", fmt.Errorf("resolving man directory: %w", err)
 	}
