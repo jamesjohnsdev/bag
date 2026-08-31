@@ -13,6 +13,6 @@ func main() {
 	if err := config.Load(); err != nil {
 		log.Fatalf("loading config: %s", err.Error())
 	}
-	ctx := kong.Parse(&cmd.CLI{}, kong.BindTo(context.Background(), (*context.Context)(nil)))
+	ctx := kong.Parse(&cmd.CLI{}, kong.Name("bag"), kong.BindTo(context.Background(), (*context.Context)(nil)), cmd.Description)
 	ctx.FatalIfErrorf(ctx.Run())
 }
