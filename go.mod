@@ -11,7 +11,9 @@ tool (
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/alecthomas/kong v1.16.1
+	github.com/alecthomas/mango-kong v0.1.0
 	github.com/google/go-github/v89 v89.0.0
+	github.com/muesli/roff v0.1.0
 )
 
 require (
@@ -37,7 +39,6 @@ require (
 	github.com/OpenPeeDeeP/depguard/v2 v2.2.1 // indirect
 	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
 	github.com/alecthomas/go-check-sumtype v0.3.1 // indirect
-	github.com/alecthomas/mango-kong v0.1.0 // indirect
 	github.com/alexkohler/nakedret/v2 v2.0.6 // indirect
 	github.com/alexkohler/prealloc v1.1.0 // indirect
 	github.com/alfatraining/structtag v1.0.0 // indirect
@@ -152,7 +153,6 @@ require (
 	github.com/moricho/tparallel v0.3.2 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/mango v0.1.1-0.20220205060214-77e2058169ab // indirect
-	github.com/muesli/roff v0.1.0 // indirect
 	github.com/nakabonne/nestif v0.3.1 // indirect
 	github.com/nishanths/exhaustive v0.12.0 // indirect
 	github.com/nishanths/predeclared v0.2.2 // indirect
