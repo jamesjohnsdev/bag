@@ -19,6 +19,8 @@ func (c *ManInstallCmd) Run(ctx *kong.Context) error {
 	if err != nil {
 		return err
 	}
+	// this repeats the previous step but not worth worrying about refactor
+	EnsureManPage(ctx.Model)
 
 	fmt.Printf("man page installed to %s\n", dest)
 	fmt.Println("run `mandb` (Linux) or `makewhatis` (macOS) to refresh index, then `man bag`")
