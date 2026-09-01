@@ -12,6 +12,7 @@ require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/alecthomas/kong v1.16.1
 	github.com/alecthomas/mango-kong v0.1.0
+	github.com/fatih/color v1.19.0
 	github.com/google/go-github/v89 v89.0.0
 	github.com/muesli/roff v0.1.0
 )
@@ -74,7 +75,6 @@ require (
 	github.com/denis-tingaikin/go-header v0.5.0 // indirect
 	github.com/dlclark/regexp2/v2 v2.2.1 // indirect
 	github.com/ettle/strcase v0.2.0 // indirect
-	github.com/fatih/color v1.19.0 // indirect
 	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/firefart/nonamedreturns v1.0.8 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
