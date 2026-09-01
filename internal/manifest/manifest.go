@@ -89,3 +89,13 @@ func AddBinary(manifestPath, name string, entry BinaryEntry) error {
 	manifest.Binaries[name] = entry
 	return Write(manifestPath, manifest)
 }
+
+// RemoveBinary updates a manifest file, removing a binary entry
+func RemoveBinary(manifestPath, name string) error {
+	manifest, err := Parse(manifestPath)
+	if err != nil {
+		return fmt.Errorf("parsing manifest: %w", err)
+	}
+	delete(manifest.Binaries, name)
+	return Write(manifestPath, manifest)
+}

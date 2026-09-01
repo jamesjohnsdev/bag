@@ -124,6 +124,49 @@ func TestWriteLockRoundTrip(t *testing.T) {
 	}
 }
 
+func TestRemoveLockEntry(t *testing.T) {
+	path := writeLockTemp(t, validLock)
+
+	if err := manifest.RemoveLockEntry(path, "issues"); err != nil {
+		t.Fatalf("RemoveLockEntry() error = %v", err)
+	}
+
+	lf, err := manifest.ParseLock(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := lf.Entries["issues"]; ok {
+		t.Error("expected issues entry to be removed")
+	}
+	if _, ok := lf.Entries["something"]; !ok {
+		t.Error("expected unrelated entry 'something' to remain")
+	}
+}
+
+func TestRemoveLockEntryNonexistent(t *testing.T) {
+	path := writeLockTemp(t, validLock)
+
+	if err := manifest.RemoveLockEntry(path, "does-not-exist"); err != nil {
+		t.Fatalf("RemoveLockEntry() on missing entry should be a no-op, got error = %v", err)
+	}
+
+	lf, err := manifest.ParseLock(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(lf.Entries) != 2 {
+		t.Errorf("expected lockfile untouched, got %d entries", len(lf.Entries))
+	}
+}
+
+func TestRemoveLockEntryMissingFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "nonexistent.lock")
+
+	if err := manifest.RemoveLockEntry(path, "issues"); err != nil {
+		t.Fatalf("expected no error removing from nonexistent lockfile, got %v", err)
+	}
+}
+
 func FuzzParseLock(f *testing.F) {
 	f.Add([]byte(validLock))
 	f.Add([]byte(""))
