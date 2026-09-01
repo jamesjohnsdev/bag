@@ -50,3 +50,12 @@ func AddLockEntry(lockPath, name string, entry LockEntry) error {
 	lockfile.Entries[name] = entry
 	return WriteLock(lockPath, lockfile)
 }
+
+func RemoveLockEntry(lockPath, name string) error {
+	lockfile, err := ParseLock(lockPath)
+	if err != nil {
+		return fmt.Errorf("parsing lockfile: %w", err)
+	}
+	delete(lockfile.Entries, name)
+	return WriteLock(lockPath, lockfile)
+}

@@ -160,6 +160,44 @@ func TestWriteRoundTrip(t *testing.T) {
 	}
 }
 
+func TestRemoveBinary(t *testing.T) {
+	path := writeTemp(t, validTOML)
+
+	if err := manifest.RemoveBinary(path, "issues"); err != nil {
+		t.Fatalf("RemoveBinary() error = %v", err)
+	}
+
+	m, err := manifest.Parse(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := m.Binaries["issues"]; ok {
+		t.Error("expected issues binary to be removed")
+	}
+	if _, ok := m.Binaries["something"]; !ok {
+		t.Error("expected unrelated binary 'something' to remain")
+	}
+	if m.Commands["lint"] != "golangci-lint run" {
+		t.Error("expected commands to be preserved")
+	}
+}
+
+func TestRemoveBinaryNonexistent(t *testing.T) {
+	path := writeTemp(t, validTOML)
+
+	if err := manifest.RemoveBinary(path, "does-not-exist"); err != nil {
+		t.Fatalf("RemoveBinary() on missing entry should be a no-op, got error = %v", err)
+	}
+
+	m, err := manifest.Parse(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Binaries) != 3 {
+		t.Errorf("expected manifest untouched, got %d binaries", len(m.Binaries))
+	}
+}
+
 func FuzzParse(f *testing.F) {
 	f.Add([]byte(validTOML))
 	f.Add([]byte(""))

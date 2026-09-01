@@ -238,3 +238,36 @@ func LinkToPath(name, version, binDir string) error {
 	}
 	return nil
 }
+
+func Unlink(name, binDir string) error {
+	if !isSafeName(name) {
+		return fmt.Errorf("invalid binary name: %q", name)
+	}
+	//src := BinaryPath(name, version)
+	linkName := filepath.Join(binDir, name)
+	_, err := os.Readlink(linkName)
+	if err != nil {
+		return fmt.Errorf("reading sym link: %w", err)
+	}
+	if err := os.Remove(linkName); err != nil {
+		return fmt.Errorf("removing link: %w", err)
+	}
+	return nil
+}
+
+func Remove(name, version string) error {
+	if !isSafeName(name) {
+		return fmt.Errorf("supplied name '%s' not safe", name)
+	}
+	if !isSafeName(version) {
+		return fmt.Errorf("supplied version '%s' is not safe", version)
+	}
+	entryDir := EntryDir(name, version)
+	if err := os.Chmod(entryDir, 0o755); err != nil {
+		return fmt.Errorf("making entry dir writable: %w", err)
+	}
+	if err := os.RemoveAll(entryDir); err != nil {
+		return fmt.Errorf("removing directory %s: %w", entryDir, err)
+	}
+	return nil
+}
