@@ -30,8 +30,8 @@ func (cmd *RemoveCmd) Run(ctx context.Context) error {
 	if err := store.Unlink(cmd.Name, ws.binDir); err != nil {
 		return fmt.Errorf("removing sym link: %w", err)
 	}
-	if err := store.Remove(cmd.Name, entry.Version); err != nil {
-		_ = store.LinkToPath(cmd.Name, entry.Version, ws.binDir)
+	if err := store.Remove(cmd.Name, entry.Active); err != nil {
+		_ = store.LinkToPath(cmd.Name, entry.Active, ws.binDir)
 		return fmt.Errorf("removing binary: %w", err)
 	}
 

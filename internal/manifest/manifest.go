@@ -12,11 +12,15 @@ type Manifest struct {
 	Binaries map[string]BinaryEntry
 }
 
+type VersionEntry struct {
+	Source string `toml:"source"`
+}
+
 // TODO: change to Goa and set up sum type for `Type` field
 type BinaryEntry struct {
-	Source  string `toml:"source"`
-	Version string `toml:"version"`
-	Type    string `toml:"type"` // "binary" | "script"
+	Type     string                  `toml:"type"` // "binary" | "script"
+	Active   string                  `toml:"active"`
+	Versions map[string]VersionEntry `toml:"versions"`
 }
 
 func Parse(path string) (*Manifest, error) {
@@ -28,33 +32,43 @@ func Parse(path string) (*Manifest, error) {
 		Commands: make(map[string]string),
 		Binaries: make(map[string]BinaryEntry),
 	}
-	if cmds, ok := raw["commands"].(map[string]any); ok {
-		for i, val := range cmds {
-			if s, ok := val.(string); ok {
-				man.Commands[i] = s
+	if commands, ok := raw["commands"].(map[string]any); ok {
+		for cmdName, cmdVal := range commands {
+			if cmdStr, ok := cmdVal.(string); ok {
+				man.Commands[cmdName] = cmdStr
 			}
 		}
 	}
-	for i, val := range raw {
-		if i == "commands" {
+	for binName, binVal := range raw {
+		if binName == "commands" {
 			continue
 		}
-		m, ok := val.(map[string]any)
+		binFields, ok := binVal.(map[string]any)
 		if !ok {
 			continue
 		}
 		// Expected behaviour is to default to binary
-		entry := BinaryEntry{Type: "binary"}
-		if src, ok := m["source"].(string); ok {
-			entry.Source = src
-		}
-		if ver, ok := m["version"].(string); ok {
-			entry.Version = ver
-		}
-		if typ, ok := m["type"].(string); ok {
+		entry := BinaryEntry{Type: "binary", Versions: make(map[string]VersionEntry)}
+		if typ, ok := binFields["type"].(string); ok {
 			entry.Type = typ
 		}
-		man.Binaries[i] = entry
+		if active, ok := binFields["active"].(string); ok {
+			entry.Active = active
+		}
+		if versions, ok := binFields["versions"].(map[string]any); ok {
+			for versionName, versionVal := range versions {
+				versionFields, ok := versionVal.(map[string]any)
+				if !ok {
+					continue
+				}
+				var versionEntry VersionEntry
+				if src, ok := versionFields["source"].(string); ok {
+					versionEntry.Source = src
+				}
+				entry.Versions[versionName] = versionEntry
+			}
+		}
+		man.Binaries[binName] = entry
 	}
 	return man, nil
 }

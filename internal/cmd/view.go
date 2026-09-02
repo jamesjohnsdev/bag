@@ -26,11 +26,15 @@ func (cmd *ViewCmd) Run(context.Context) error {
 	if !ok {
 		return fmt.Errorf("unable to find manifest entry for %s", cmd.Name)
 	}
+	activeVersion, ok := entry.Versions[entry.Active]
+	if !ok {
+		return fmt.Errorf("no active version recorded for %s", cmd.Name)
+	}
 
 	// TODO: improve the results output here.
-	fmt.Printf("Source: %s\n", color.BlueString(entry.Source))
+	fmt.Printf("Source: %s\n", color.BlueString(activeVersion.Source))
 	fmt.Printf("Type: %s\n", color.BlueString(entry.Type))
-	fmt.Printf("Version: %s\n", color.BlueString(entry.Version))
+	fmt.Printf("Version: %s\n", color.BlueString(entry.Active))
 
 	return nil
 }
