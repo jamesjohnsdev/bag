@@ -9,12 +9,10 @@ import (
 )
 
 const validLock = `
-[issues]
-version = "v0.1.0"
+[issues."v0.1.0"]
 hash = "sha256:abc123def456abc123def456abc123def456abc123def456abc123def456abc1"
 
-[something]
-version = "v1.23.0"
+[something."v1.23.0"]
 hash = "sha256:789012ghi345789012ghi345789012ghi345789012ghi345789012ghi345789"
 `
 
@@ -38,12 +36,13 @@ func TestParseLock(t *testing.T) {
 			name:  "valid lock file",
 			input: validLock,
 			check: func(t *testing.T, lf *manifest.LockFile) {
-				entry, ok := lf.Entries["issues"]
+				versions, ok := lf.Entries["issues"]
 				if !ok {
 					t.Fatal("missing entry: issues")
 				}
-				if entry.Version != "v0.1.0" {
-					t.Errorf("issues.version = %q, want v0.1.0", entry.Version)
+				entry, ok := versions["v0.1.0"]
+				if !ok {
+					t.Fatal("missing version: issues v0.1.0")
 				}
 				if entry.Hash == "" {
 					t.Error("issues.hash is empty")
@@ -109,17 +108,21 @@ func TestWriteLockRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for k, want := range original.Entries {
-		entry, ok := got.Entries[k]
+	for k, wantVersions := range original.Entries {
+		gotVersions, ok := got.Entries[k]
 		if !ok {
 			t.Errorf("missing entry after round trip: %s", k)
 			continue
 		}
-		if entry.Version != want.Version {
-			t.Errorf("entry[%s].version = %q, want %q", k, entry.Version, want.Version)
-		}
-		if entry.Hash != want.Hash {
-			t.Errorf("entry[%s].hash = %q, want %q", k, entry.Hash, want.Hash)
+		for v, want := range wantVersions {
+			entry, ok := gotVersions[v]
+			if !ok {
+				t.Errorf("entry[%s]: missing version after round trip: %s", k, v)
+				continue
+			}
+			if entry.Hash != want.Hash {
+				t.Errorf("entry[%s][%s].hash = %q, want %q", k, v, entry.Hash, want.Hash)
+			}
 		}
 	}
 }
@@ -170,7 +173,7 @@ func TestRemoveLockEntryMissingFile(t *testing.T) {
 func FuzzParseLock(f *testing.F) {
 	f.Add([]byte(validLock))
 	f.Add([]byte(""))
-	f.Add([]byte("[foo]\nversion = \"v1.0.0\"\nhash = \"sha256:abc\"\n"))
+	f.Add([]byte("[foo.\"v1.0.0\"]\nhash = \"sha256:abc\"\n"))
 
 	f.Fuzz(func(t *testing.T, data []byte) {
 		tmp := filepath.Join(t.TempDir(), "fuzz.lock")
