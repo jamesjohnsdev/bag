@@ -102,14 +102,15 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 // postInstall handles general chores required for manifest and lock after binary installation
 func postInstall(manPath, binName, version, hash string, binaryEntry manifest.BinaryEntry) error {
 	if err := manifest.AddBinary(manPath, binName, binaryEntry); err != nil {
-		return err
+		return fmt.Errorf("adding manifest entry: %w", err)
 	}
 	lockPath := manifest.FindLock(manPath)
 	lockEntry := manifest.LockEntry{
 		Hash: hash,
 	}
 	if err := manifest.AddLockEntry(lockPath, binName, version, lockEntry); err != nil {
-		return err
+		_ = manifest.RemoveBinary(manPath, binName)
+		return fmt.Errorf("adding lockfile entry: %w", err)
 	}
 	return nil
 }
