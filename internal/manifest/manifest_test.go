@@ -14,15 +14,22 @@ lint = "golangci-lint run"
 build = "go build ./..."
 
 [issues]
+active = "v0.1.0"
+
+[issues.versions."v0.1.0"]
 source = "github.com/jamesjohnsdev/issues"
-version = "v0.1.0"
 
 [something]
-version = "v1.23.0"
+active = "v1.23.0"
+
+[something.versions."v1.23.0"]
 
 [somethingelse]
-source = "https://gist.github.com/be057f2959753ee7c8ab57b3ee6a87ab.git"
+active = "v1.0.0"
 type = "script"
+
+[somethingelse.versions."v1.0.0"]
+source = "https://gist.github.com/be057f2959753ee7c8ab57b3ee6a87ab.git"
 `
 
 func writeTemp(t *testing.T, content string) string {
@@ -52,11 +59,15 @@ func TestParse(t *testing.T) {
 				if !ok {
 					t.Fatal("missing binary: issues")
 				}
-				if issues.Source != "github.com/jamesjohnsdev/issues" {
-					t.Errorf("issues.source = %q", issues.Source)
+				if issues.Active != "v0.1.0" {
+					t.Errorf("issues.active = %q", issues.Active)
 				}
-				if issues.Version != "v0.1.0" {
-					t.Errorf("issues.version = %q", issues.Version)
+				issuesVer, ok := issues.Versions[issues.Active]
+				if !ok {
+					t.Fatal("missing active version entry for issues")
+				}
+				if issuesVer.Source != "github.com/jamesjohnsdev/issues" {
+					t.Errorf("issues.source = %q", issuesVer.Source)
 				}
 				if m.Binaries["somethingelse"].Type != "script" {
 					t.Errorf("somethingelse.type = %q, want script", m.Binaries["somethingelse"].Type)
@@ -148,14 +159,21 @@ func TestWriteRoundTrip(t *testing.T) {
 			t.Errorf("missing binary after round trip: %s", k)
 			continue
 		}
-		if entry.Source != want.Source {
-			t.Errorf("binary[%s].source = %q, want %q", k, entry.Source, want.Source)
-		}
-		if entry.Version != want.Version {
-			t.Errorf("binary[%s].version = %q, want %q", k, entry.Version, want.Version)
+		if entry.Active != want.Active {
+			t.Errorf("binary[%s].active = %q, want %q", k, entry.Active, want.Active)
 		}
 		if entry.Type != want.Type {
 			t.Errorf("binary[%s].type = %q, want %q", k, entry.Type, want.Type)
+		}
+		for v, wantVer := range want.Versions {
+			gotVer, ok := entry.Versions[v]
+			if !ok {
+				t.Errorf("binary[%s]: missing version after round trip: %s", k, v)
+				continue
+			}
+			if gotVer.Source != wantVer.Source {
+				t.Errorf("binary[%s][%s].source = %q, want %q", k, v, gotVer.Source, wantVer.Source)
+			}
 		}
 	}
 }

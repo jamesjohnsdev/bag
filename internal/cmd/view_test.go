@@ -45,9 +45,11 @@ func TestViewCmdRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := manifest.AddBinary(manPath, "foo", manifest.BinaryEntry{
-		Source:  "/tmp/src-bin",
-		Version: "1.0.0",
-		Type:    "binary",
+		Type:   "binary",
+		Active: "1.0.0",
+		Versions: map[string]manifest.VersionEntry{
+			"1.0.0": {Source: "/tmp/src-bin"},
+		},
 	}); err != nil {
 		t.Fatal(err)
 	}

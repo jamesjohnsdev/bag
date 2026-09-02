@@ -81,9 +81,11 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 	}
 	// TODO: consider moving this binaryEntry and LinkToPath to within postInstall
 	binaryEntry = manifest.BinaryEntry{
-		Source:  cmd.Source,
-		Version: version,
-		Type:    "binary",
+		Type:   "binary",
+		Active: version,
+		Versions: map[string]manifest.VersionEntry{
+			version: {Source: cmd.Source},
+		},
 	}
 	if err := store.LinkToPath(binName, version, ws.binDir); err != nil {
 		return fmt.Errorf("installing: %w", err)
