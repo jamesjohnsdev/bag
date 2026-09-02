@@ -67,9 +67,8 @@ func installTestBinary(t *testing.T, name, version string) (hash string) {
 	}); err != nil {
 		t.Fatalf("AddBinary() error = %v", err)
 	}
-	if err := manifest.AddLockEntry(manifest.FindLock(manPath), name, manifest.LockEntry{
-		Version: version,
-		Hash:    hash,
+	if err := manifest.AddLockEntry(manifest.FindLock(manPath), name, version, manifest.LockEntry{
+		Hash: hash,
 	}); err != nil {
 		t.Fatalf("AddLockEntry() error = %v", err)
 	}
@@ -149,7 +148,7 @@ func TestRemoveCmdRunMissingSymlink(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if err := manifest.AddLockEntry(manifest.FindLock(manPath), "foo", manifest.LockEntry{Version: "1.0.0", Hash: hash}); err != nil {
+	if err := manifest.AddLockEntry(manifest.FindLock(manPath), "foo", "1.0.0", manifest.LockEntry{Hash: hash}); err != nil {
 		t.Fatal(err)
 	}
 

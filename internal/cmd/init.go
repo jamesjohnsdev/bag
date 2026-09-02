@@ -28,7 +28,7 @@ func (c *InitCmd) Run() error {
 
 	lockPath := manifest.FindLock(manifestPath)
 	err = manifest.WriteLock(lockPath, &manifest.LockFile{
-		Entries: map[string]manifest.LockEntry{},
+		Entries: map[string]map[string]manifest.LockEntry{},
 	})
 	if err == nil {
 		fmt.Println("Intialised successfully")

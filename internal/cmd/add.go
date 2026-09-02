@@ -106,10 +106,9 @@ func postInstall(manPath, binName, version, hash string, binaryEntry manifest.Bi
 	}
 	lockPath := manifest.FindLock(manPath)
 	lockEntry := manifest.LockEntry{
-		Version: version,
-		Hash:    hash,
+		Hash: hash,
 	}
-	if err := manifest.AddLockEntry(lockPath, binName, lockEntry); err != nil {
+	if err := manifest.AddLockEntry(lockPath, binName, version, lockEntry); err != nil {
 		return err
 	}
 	return nil
