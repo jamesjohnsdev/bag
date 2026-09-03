@@ -3,6 +3,9 @@
 #
 # Binaries for programs and plugins
 bag
+
+# Generated man pages (goreleaser before hook)
+.man/
 *.exe
 *.exe~
 *.dll
