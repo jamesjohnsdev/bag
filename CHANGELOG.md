@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/jamesjohnsdev/bag/compare/v0.2.0...v0.2.1) (2026-09-03)
+
+
+### Bug Fixes
+
+* generate man pages outside dist to avoid goreleaser clean conflict ([8b384ae](https://github.com/jamesjohnsdev/bag/commit/8b384ae619a8d2b75c705fbc6264e1f5406e31e5))
+
 ## [0.2.0](https://github.com/jamesjohnsdev/bag/compare/v0.1.5...v0.2.0) (2026-09-03)
 
 
