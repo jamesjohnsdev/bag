@@ -2,8 +2,8 @@ version: 2
 
 before:
   hooks:
-    - mkdir -p dist/man1
-    - go run ./tools/gen-man dist/man1
+    - mkdir -p .man/man1
+    - go run ./tools/gen-man .man/man1
 
 builds:
   - env:
@@ -27,7 +27,7 @@ archives:
         formats:
           - zip
     files:
-      - src: dist/man1/bag.1
+      - src: .man/man1/bag.1
         dst: man/man1/bag.1
 
 nfpms:
@@ -39,7 +39,7 @@ nfpms:
     formats:
       - deb
     contents:
-      - src: dist/man1/bag.1
+      - src: .man/man1/bag.1
         dst: /usr/share/man/man1/bag.1
 
 checksum:
