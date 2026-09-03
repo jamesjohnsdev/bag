@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.2.0](https://github.com/jamesjohnsdev/bag/compare/v0.1.5...v0.2.0) (2026-09-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* updated lockfile to allow version switching
+* implement multi-version in manifest
+
+### Features
+
+* auto-install man page ([7736bd1](https://github.com/jamesjohnsdev/bag/commit/7736bd18a51dc4fce2e89b3a71debe2d62ba6673))
+* **cmd:** add remove command ([c384e38](https://github.com/jamesjohnsdev/bag/commit/c384e385683cacbd2b391c50fac560112c538c36))
+* implement multi-version in manifest ([15dede3](https://github.com/jamesjohnsdev/bag/commit/15dede356c42bcc5f2432a546c9ee094737c096d))
+* improved error handling and rollback for post-install ([91af4f2](https://github.com/jamesjohnsdev/bag/commit/91af4f22d409bae3c5466613cf3e03de98e961df))
+* man file inclusion in release assets ([0e0d747](https://github.com/jamesjohnsdev/bag/commit/0e0d747d3b7ccbb69dcc0588e09a25ebb17f5fe0))
+* man-page support ([d87c012](https://github.com/jamesjohnsdev/bag/commit/d87c012881320c6f306ce0deee5139caf038cab5))
+* update command ([d52b788](https://github.com/jamesjohnsdev/bag/commit/d52b788fdf5c91d4f9c225b7002ee567cd17d64c))
+* updated lockfile to allow version switching ([b0341e3](https://github.com/jamesjohnsdev/bag/commit/b0341e3c32766956b7c5fa92f9d2bff786642deb))
+* view command ([51e433b](https://github.com/jamesjohnsdev/bag/commit/51e433bfbdcc7d10848c90b0f40804833c0c6d59))
+
+
+### Bug Fixes
+
+* ensure `man-install` writes state file ([4c31cc2](https://github.com/jamesjohnsdev/bag/commit/4c31cc2e0ff0908dc3b931f7479ea4d28b6d80b6))
+
 ## [0.1.5](https://github.com/jamesjohnsdev/bag/compare/v0.1.4...v0.1.5) (2026-08-29)
 
 
