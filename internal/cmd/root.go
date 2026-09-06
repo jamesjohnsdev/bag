@@ -5,6 +5,7 @@ type CLI struct {
 
 	Init   InitCmd   `cmd:"" help:"Initialise a bag"`
 	Add    AddCmd    `cmd:"" help:"Add a binary"`
+	Update UpdateCmd `cmd:"" help:"Update a binary"`
 	Remove RemoveCmd `cmd:"" help:"Remove an installed binary"`
 	View   ViewCmd   `cmd:"" help:"View details of an installed binary"`
 	Tool   ToolCmd   `cmd:"" help:"Manage project tools"`

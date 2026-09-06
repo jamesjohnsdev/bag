@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 type Resolution struct {
@@ -65,4 +66,16 @@ func DirectURL(src url.URL) bool {
 		return true
 	}
 	return false
+}
+
+// StripVersionTag removes a trailing "@version" tag from a source's path, if present.
+// Stored sources may carry a pinned version (e.g. "github.com/owner/repo@v1.2.3") from
+// when the binary was added or previously updated; stripping it before resolving forces
+// providers such as GithubProvider to fall back to their latest-release lookup instead of
+// re-resolving the same pinned tag forever.
+func StripVersionTag(src url.URL) url.URL {
+	if idx := strings.LastIndex(src.Path, "@"); idx != -1 {
+		src.Path = src.Path[:idx]
+	}
+	return src
 }
