@@ -31,6 +31,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		binaryEntry manifest.BinaryEntry
 		hash        string
 	)
+	storedSource := cmd.Source
 
 	// download binary
 	if cmd.Local {
@@ -49,13 +50,20 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 
 	} else {
 		client := httpclient.New()
-		provider, err := provider.Dispatch(cmd.Source, client)
-		if err != nil {
-			return fmt.Errorf("dispatching provider: %w", err)
-		}
 		src, err := url.Parse(cmd.Source)
 		if err != nil {
 			return fmt.Errorf("parsing source: %w", err)
+		}
+		// don't persist an "@version" tag on the source: the version is already tracked
+		// by the manifest's version key, and keeping it out of the stored source lets
+		// `update` resolve against the latest release instead of re-pinning to this one
+		if !provider.DirectURL(*src) {
+			stripped := provider.StripVersionTag(*src)
+			storedSource = stripped.String()
+		}
+		provider, err := provider.Dispatch(cmd.Source, client)
+		if err != nil {
+			return fmt.Errorf("dispatching provider: %w", err)
 		}
 		if cmd.Version != "" {
 			version = cmd.Version
@@ -74,7 +82,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 			return fmt.Errorf("invalid binary name: %q", resolution.BinaryName)
 		}
 		binName, version = resolution.BinaryName, resolution.ResolvedVersion
-		hash, err = store.InstallFromReader(binName, version, cmd.Source, resolution.Reader)
+		hash, err = store.InstallFromReader(binName, version, storedSource, resolution.Reader)
 		if err != nil {
 			return fmt.Errorf("installing from reader: %w", err)
 		}
@@ -84,7 +92,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		Type:   "binary",
 		Active: version,
 		Versions: map[string]manifest.VersionEntry{
-			version: {Source: cmd.Source},
+			version: {Source: storedSource},
 		},
 	}
 	if err := store.LinkToPath(binName, version, ws.binDir); err != nil {

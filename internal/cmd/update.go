@@ -44,6 +44,10 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	if provider.DirectURL(*src) {
 		return fmt.Errorf("don't currently support direct urls")
 	}
+	// stored source may still carry a pinned "@version" tag from before sources were
+	// persisted clean (or from a manually edited manifest); strip it so update always
+	// resolves against the latest release
+	*src = provider.StripVersionTag(*src)
 	client := httpclient.New()
 
 	prov, err := provider.Dispatch(src.String(), client)
@@ -63,6 +67,11 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	}
 	if resolution.BinaryName != cmd.Name {
 		return fmt.Errorf("resolved binary name %q does not match %q", resolution.BinaryName, cmd.Name)
+	}
+	if resolution.ResolvedVersion == oldVersion {
+		_ = resolution.Reader.Close()
+		fmt.Printf("%s is already up to date (%s)\n", color.GreenString(cmd.Name), oldVersion)
+		return nil
 	}
 	version = resolution.ResolvedVersion
 	hash, err := store.InstallFromReader(cmd.Name, version, src.String(), resolution.Reader)
