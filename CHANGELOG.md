@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.2](https://github.com/jamesjohnsdev/bag/compare/v0.2.1...v0.2.2) (2026-09-06)
+
+
+### Features
+
+* handle multi-file archives that contain more than simple binaries ([967b97c](https://github.com/jamesjohnsdev/bag/commit/967b97c5c26d382c72ccb4b51b458457d554d655))
+
+
+### Bug Fixes
+
+* **update:** register update command ([dfcce5d](https://github.com/jamesjohnsdev/bag/commit/dfcce5d116c746b1f060a44a240134b91d11e6c7))
+* **update:** report "already up to date" instead of a false success message ([dfcce5d](https://github.com/jamesjohnsdev/bag/commit/dfcce5d116c746b1f060a44a240134b91d11e6c7))
+* **update:** stop re-pinning to the same version on update ([#55](https://github.com/jamesjohnsdev/bag/issues/55)) ([dfcce5d](https://github.com/jamesjohnsdev/bag/commit/dfcce5d116c746b1f060a44a240134b91d11e6c7))
+
 ## [0.2.1](https://github.com/jamesjohnsdev/bag/compare/v0.2.0...v0.2.1) (2026-09-03)
 
 
