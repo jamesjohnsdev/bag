@@ -10,7 +10,17 @@ import (
 )
 
 type Resolution struct {
-	Reader          io.ReadCloser
+	// Reader is set only when no archive extraction was involved (a raw
+	// binary download) - the caller streams it directly into the store.
+	Reader io.ReadCloser
+	// Dir is set when an archive was extracted: the root of the fully
+	// extracted tree, to be moved/copied into the store as-is.
+	Dir string
+	// BinaryRelPath is the path of the chosen executable relative to Dir.
+	// Only meaningful when Dir is set.
+	BinaryRelPath string
+	// Cleanup removes Dir's temporary root. Nil when Reader is set.
+	Cleanup         func() error
 	ResolvedVersion string
 	BinaryName      string
 }

@@ -2,11 +2,13 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
 
 	"github.com/fatih/color"
+
 	"github.com/jamesjohnsdev/bag/internal/httpclient"
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 	"github.com/jamesjohnsdev/bag/internal/provider"
@@ -59,6 +61,14 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("resolving: %w", err)
 	}
+	defer func() {
+		if resolution.Cleanup != nil {
+			cerr := resolution.Cleanup()
+			if cerr != nil {
+				err = errors.Join(err, fmt.Errorf("resolution cleanup: %w", cerr))
+			}
+		}
+	}()
 	if resolution.BinaryName == "" ||
 		resolution.BinaryName == "." ||
 		resolution.BinaryName == ".." ||
@@ -74,9 +84,17 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 		return nil
 	}
 	version = resolution.ResolvedVersion
-	hash, err := store.InstallFromReader(cmd.Name, version, src.String(), resolution.Reader)
-	if err != nil {
-		return fmt.Errorf("installing from reader: %w", err)
+	var hash string
+	if resolution.Dir != "" {
+		hash, err = store.InstallFromDir(cmd.Name, version, src.String(), resolution.Dir, resolution.BinaryRelPath)
+		if err != nil {
+			return fmt.Errorf("installing from dir: %w", err)
+		}
+	} else {
+		hash, err = store.InstallFromReader(cmd.Name, version, src.String(), resolution.Reader)
+		if err != nil {
+			return fmt.Errorf("installing from reader: %w", err)
+		}
 	}
 
 	if err := store.Unlink(cmd.Name, ws.binDir); err != nil {

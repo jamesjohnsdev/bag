@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"path/filepath"
@@ -75,6 +76,14 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("resolving: %w", err)
 		}
+		defer func() {
+			if resolution.Cleanup != nil {
+				cerr := resolution.Cleanup()
+				if cerr != nil {
+					err = errors.Join(err, fmt.Errorf("resolution cleanup: %w", cerr))
+				}
+			}
+		}()
 		if resolution.BinaryName == "" ||
 			resolution.BinaryName == "." ||
 			resolution.BinaryName == ".." ||
@@ -82,9 +91,16 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 			return fmt.Errorf("invalid binary name: %q", resolution.BinaryName)
 		}
 		binName, version = resolution.BinaryName, resolution.ResolvedVersion
-		hash, err = store.InstallFromReader(binName, version, storedSource, resolution.Reader)
-		if err != nil {
-			return fmt.Errorf("installing from reader: %w", err)
+		if resolution.Dir != "" {
+			hash, err = store.InstallFromDir(binName, version, cmd.Source, resolution.Dir, resolution.BinaryRelPath)
+			if err != nil {
+				return fmt.Errorf("installing from dir: %w", err)
+			}
+		} else {
+			hash, err = store.InstallFromReader(binName, version, cmd.Source, resolution.Reader)
+			if err != nil {
+				return fmt.Errorf("installing from reader: %w", err)
+			}
 		}
 	}
 	// TODO: consider moving this binaryEntry and LinkToPath to within postInstall

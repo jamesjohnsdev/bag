@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -24,23 +25,34 @@ func isSafeBinaryName(name string) bool {
 	return !strings.ContainsAny(name, "/\\")
 }
 
-func extractZip(rc io.ReadCloser, binName, version string) (res Resolution, err error) {
-	tmp, err := os.CreateTemp("", "bag-*.zip")
-	if err != nil {
-		return Resolution{}, fmt.Errorf("creating temp zip: %w", err)
+// safeExtractPath joins name onto destDir and rejects any path that would
+// resolve outside destDir (a zip-slip guard), returning the cleaned
+// destination path.
+func safeExtractPath(destDir, name string) (string, error) {
+	target := filepath.Join(destDir, filepath.FromSlash(name))
+	rel, err := filepath.Rel(destDir, target)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("archive entry %q escapes extraction root", name)
 	}
-	cleanup := true
+	return target, nil
+}
+
+func extractZip(rc io.ReadCloser, binName, version string) (res Resolution, err error) {
 	defer func() {
 		if cerr := rc.Close(); cerr != nil {
 			err = errors.Join(err, fmt.Errorf("closing archive reader: %w", cerr))
 		}
-		if cleanup {
-			if cerr := tmp.Close(); cerr != nil {
-				err = errors.Join(err, fmt.Errorf("closing temp zip: %w", cerr))
-			}
-			if rerr := os.Remove(tmp.Name()); rerr != nil {
-				err = errors.Join(err, fmt.Errorf("removing temp zip: %w", rerr))
-			}
+	}()
+	tmp, err := os.CreateTemp("", "bag-*.zip")
+	if err != nil {
+		return Resolution{}, fmt.Errorf("creating temp zip: %w", err)
+	}
+	defer func() {
+		if cerr := tmp.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing temp zip: %w", cerr))
+		}
+		if rerr := os.Remove(tmp.Name()); rerr != nil {
+			err = errors.Join(err, fmt.Errorf("removing temp zip: %w", rerr))
 		}
 	}()
 	_, err = io.Copy(tmp, rc)
@@ -57,38 +69,96 @@ func extractZip(rc io.ReadCloser, binName, version string) (res Resolution, err 
 		return Resolution{}, fmt.Errorf("reading temp .zip: %w", err)
 	}
 
-	for _, file := range zr.File {
-		if file.FileInfo().IsDir() || file.Mode()&0o111 == 0 {
-			continue
-		}
-		base := path.Base(file.Name)
-		if !isSafeBinaryName(base) {
-			continue
-		}
-		if binName != "" {
-			base = binName
-		}
-		rc, err := file.Open()
-		if err != nil {
-			return Resolution{}, fmt.Errorf("opening file %s: %w", file.Name, err)
-		}
-		cleanup = false
-		return Resolution{
-			Reader:          &tempFileCloser{rc, tmp},
-			ResolvedVersion: version,
-			BinaryName:      base,
-		}, nil
+	destDir, err := os.MkdirTemp("", "bag-extract-*")
+	if err != nil {
+		return Resolution{}, fmt.Errorf("creating extraction dir: %w", err)
 	}
-	return Resolution{}, errors.New("no executable found in archive")
-}
-
-func extractTarball(rc io.ReadCloser, binName, version string) (res Resolution, err error) {
 	cleanup := true
 	defer func() {
 		if cleanup {
-			if cerr := rc.Close(); cerr != nil {
-				err = errors.Join(err, fmt.Errorf("closing archive reader: %w", cerr))
+			_ = os.RemoveAll(destDir)
+		}
+	}()
+
+	var chosenRel, chosenBase string
+	for _, file := range zr.File {
+		target, err := safeExtractPath(destDir, file.Name)
+		if err != nil {
+			return Resolution{}, err
+		}
+		if file.FileInfo().IsDir() {
+			if err := os.MkdirAll(target, 0o755); err != nil {
+				return Resolution{}, fmt.Errorf("creating dir %s: %w", file.Name, err)
 			}
+			continue
+		}
+		if !file.Mode().IsRegular() {
+			return Resolution{}, fmt.Errorf("unsupported entry type for %s", file.Name)
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return Resolution{}, fmt.Errorf("creating parent dir for %s: %w", file.Name, err)
+		}
+		if err := extractZipFile(file, target); err != nil {
+			return Resolution{}, err
+		}
+		if chosenRel == "" && file.Mode()&0o111 != 0 {
+			base := path.Base(file.Name)
+			if isSafeBinaryName(base) {
+				rel, err := filepath.Rel(destDir, target)
+				if err != nil {
+					return Resolution{}, fmt.Errorf("resolving relative path for %s: %w", file.Name, err)
+				}
+				chosenRel, chosenBase = rel, base
+			}
+		}
+	}
+	if chosenRel == "" {
+		return Resolution{}, errors.New("no executable found in archive")
+	}
+	if binName != "" {
+		chosenBase = binName
+	}
+	cleanup = false
+	return Resolution{
+		Dir:             destDir,
+		BinaryRelPath:   chosenRel,
+		Cleanup:         func() error { return os.RemoveAll(destDir) },
+		ResolvedVersion: version,
+		BinaryName:      chosenBase,
+	}, nil
+}
+
+// extractZipFile writes a single zip entry's contents to target, preserving
+// its permission bits.
+func extractZipFile(file *zip.File, target string) (err error) {
+	src, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("opening file %s: %w", file.Name, err)
+	}
+	defer func() {
+		if cerr := src.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing archive entry %s: %w", file.Name, cerr))
+		}
+	}()
+	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, file.Mode().Perm())
+	if err != nil {
+		return fmt.Errorf("creating %s: %w", target, err)
+	}
+	defer func() {
+		if cerr := dst.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing %s: %w", target, cerr))
+		}
+	}()
+	if _, err := io.Copy(dst, src); err != nil {
+		return fmt.Errorf("writing %s: %w", target, err)
+	}
+	return nil
+}
+
+func extractTarball(rc io.ReadCloser, binName, version string) (res Resolution, err error) {
+	defer func() {
+		if cerr := rc.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing archive reader: %w", cerr))
 		}
 	}()
 	gz, err := gzip.NewReader(rc)
@@ -96,6 +166,19 @@ func extractTarball(rc io.ReadCloser, binName, version string) (res Resolution, 
 		return Resolution{}, fmt.Errorf("gzip reader: %w", err)
 	}
 	tr := tar.NewReader(gz)
+
+	destDir, err := os.MkdirTemp("", "bag-extract-*")
+	if err != nil {
+		return Resolution{}, fmt.Errorf("creating extraction dir: %w", err)
+	}
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.RemoveAll(destDir)
+		}
+	}()
+
+	var chosenRel, chosenBase string
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
@@ -104,24 +187,68 @@ func extractTarball(rc io.ReadCloser, binName, version string) (res Resolution, 
 		if err != nil {
 			return Resolution{}, fmt.Errorf("reading tar: %w", err)
 		}
-		if hdr.Typeflag != tar.TypeReg || hdr.FileInfo().Mode()&0o111 == 0 {
-			continue
+		target, err := safeExtractPath(destDir, hdr.Name)
+		if err != nil {
+			return Resolution{}, err
 		}
-		base := path.Base(hdr.Name)
-		if !isSafeBinaryName(base) {
-			continue
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(target, 0o755); err != nil {
+				return Resolution{}, fmt.Errorf("creating dir %s: %w", hdr.Name, err)
+			}
+		case tar.TypeReg:
+			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+				return Resolution{}, fmt.Errorf("creating parent dir for %s: %w", hdr.Name, err)
+			}
+			if err := extractTarFile(tr, hdr, target); err != nil {
+				return Resolution{}, err
+			}
+			if chosenRel == "" && hdr.FileInfo().Mode()&0o111 != 0 {
+				base := path.Base(hdr.Name)
+				if isSafeBinaryName(base) {
+					rel, err := filepath.Rel(destDir, target)
+					if err != nil {
+						return Resolution{}, fmt.Errorf("resolving relative path for %s: %w", hdr.Name, err)
+					}
+					chosenRel, chosenBase = rel, base
+				}
+			}
+		default:
+			return Resolution{}, fmt.Errorf("unsupported entry type for %s", hdr.Name)
 		}
-		if binName != "" {
-			base = binName
-		}
-		cleanup = false
-		return Resolution{
-			Reader:          &tarCloser{rc, tr},
-			ResolvedVersion: version,
-			BinaryName:      base,
-		}, nil
 	}
-	return Resolution{}, errors.New("no executable found in archive")
+	if chosenRel == "" {
+		return Resolution{}, errors.New("no executable found in archive")
+	}
+	if binName != "" {
+		chosenBase = binName
+	}
+	cleanup = false
+	return Resolution{
+		Dir:             destDir,
+		BinaryRelPath:   chosenRel,
+		Cleanup:         func() error { return os.RemoveAll(destDir) },
+		ResolvedVersion: version,
+		BinaryName:      chosenBase,
+	}, nil
+}
+
+// extractTarFile writes a single tar entry's contents to target, preserving
+// its permission bits.
+func extractTarFile(tr *tar.Reader, hdr *tar.Header, target string) (err error) {
+	dst, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, hdr.FileInfo().Mode().Perm())
+	if err != nil {
+		return fmt.Errorf("creating %s: %w", target, err)
+	}
+	defer func() {
+		if cerr := dst.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing %s: %w", target, cerr))
+		}
+	}()
+	if _, err := io.Copy(dst, tr); err != nil {
+		return fmt.Errorf("writing %s: %w", target, err)
+	}
+	return nil
 }
 
 func useRawBinary(rc io.ReadCloser, name string, version string) (Resolution, error) {
@@ -207,34 +334,6 @@ func handleAssetVariations(rc io.ReadCloser, binName, version, extension string)
 	default:
 		return Resolution{}, fmt.Errorf("release asset type not supported: %s", extension)
 	}
-}
-
-type tempFileCloser struct {
-	rc  io.ReadCloser
-	tmp *os.File
-}
-
-type tarCloser struct {
-	rc io.ReadCloser
-	tr *tar.Reader
-}
-
-func (t *tarCloser) Read(p []byte) (int, error) { return t.tr.Read(p) }
-func (t *tarCloser) Close() error               { return t.rc.Close() }
-
-func (t *tempFileCloser) Read(p []byte) (int, error) {
-	return t.rc.Read(p)
-}
-
-func (t *tempFileCloser) Close() error {
-	err := t.rc.Close()
-	if cerr := t.tmp.Close(); cerr != nil {
-		err = errors.Join(err, fmt.Errorf("closing temp file: %w", cerr))
-	}
-	if rerr := os.Remove(t.tmp.Name()); rerr != nil {
-		err = errors.Join(err, fmt.Errorf("removing temp file: %w", rerr))
-	}
-	return err
 }
 
 func parseAssetName(name string) (ext, base string, err error) {
