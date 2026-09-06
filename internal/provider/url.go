@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+
+	"github.com/jamesjohnsdev/bag/internal/output"
 )
 
 // URLProvider handles direct URLs that are provided with a `http` or `https` prefix
@@ -46,5 +48,11 @@ func (provider URLProvider) Resolve(ctx context.Context, src url.URL, binName, v
 	if extension == "" && binName == "" {
 		binName = path.Base(src.Path)
 	}
-	return handleAssetVariations(resp.Body, binName, version, extension)
+	displayName := binName
+	if displayName == "" {
+		displayName = path.Base(src.Path)
+	}
+	output.Statusf("%s %s (%s)", displayName, version, output.HumanSize(resp.ContentLength))
+	wrappedRC := output.WrapProgress(resp.Body, resp.ContentLength, binName)
+	return handleAssetVariations(wrappedRC, binName, version, extension)
 }

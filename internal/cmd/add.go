@@ -9,6 +9,7 @@ import (
 
 	"github.com/jamesjohnsdev/bag/internal/httpclient"
 	"github.com/jamesjohnsdev/bag/internal/manifest"
+	"github.com/jamesjohnsdev/bag/internal/output"
 	"github.com/jamesjohnsdev/bag/internal/provider"
 	"github.com/jamesjohnsdev/bag/internal/store"
 )
@@ -72,6 +73,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		if cmd.Name != "" {
 			binName = cmd.Name
 		}
+		output.Statusf("resolving %s...", cmd.Source)
 		resolution, err := provider.Resolve(ctx, *src, binName, version)
 		if err != nil {
 			return fmt.Errorf("resolving: %w", err)

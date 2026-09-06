@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	gh "github.com/google/go-github/v89/github"
+
 	"github.com/jamesjohnsdev/bag/internal/config"
+	"github.com/jamesjohnsdev/bag/internal/output"
 )
 
 // GithubProvider will handle any links to Github repositories
@@ -67,8 +69,9 @@ func (provider GithubProvider) Resolve(ctx context.Context, src url.URL, binName
 	if err != nil {
 		return Resolution{}, fmt.Errorf("getting release asset: %w", err)
 	}
+	assetSize := int64(asset.GetSize())
 	// download winning asset, stream body into Resolution.Reader
-	res, err := provider.downloadReleaseAsset(ctx, extension, owner, repo, asset.GetID(), binName, release.GetTagName(), provider.Client.Client())
+	res, err := provider.downloadReleaseAsset(ctx, extension, owner, repo, assetSize, asset.GetID(), binName, release.GetTagName(), provider.Client.Client())
 	if err != nil {
 		return Resolution{}, fmt.Errorf("downloading asset %s: %w", asset.GetName(), err)
 	}
@@ -117,6 +120,7 @@ func (provider GithubProvider) downloadReleaseAsset(
 	extension,
 	owner,
 	repo string,
+	assetSize int64,
 	assetID int64,
 	binName, version string,
 	client *http.Client,
@@ -125,5 +129,13 @@ func (provider GithubProvider) downloadReleaseAsset(
 	if err != nil {
 		return Resolution{}, fmt.Errorf("downloading release asset %s: %w", binName, err)
 	}
-	return handleAssetVariations(rc, binName, version, extension)
+	displayName := binName
+	if displayName == "" {
+		displayName = repo
+	}
+	output.Statusf("%s %s (%s)", displayName, version, output.HumanSize(assetSize))
+	wrappedRC := output.WrapProgress(rc, assetSize, binName)
+	res, err := handleAssetVariations(wrappedRC, binName, version, extension)
+	res.Size = assetSize
+	return res, err
 }

@@ -23,6 +23,7 @@ type Resolution struct {
 	Cleanup         func() error
 	ResolvedVersion string
 	BinaryName      string
+	Size            int64 // -1 will be unknown
 }
 
 type Provider interface {
