@@ -11,6 +11,7 @@ import (
 
 	"github.com/jamesjohnsdev/bag/internal/httpclient"
 	"github.com/jamesjohnsdev/bag/internal/manifest"
+	"github.com/jamesjohnsdev/bag/internal/output"
 	"github.com/jamesjohnsdev/bag/internal/provider"
 	"github.com/jamesjohnsdev/bag/internal/store"
 )
@@ -57,6 +58,7 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 		return fmt.Errorf("dispatching: %w", err)
 	}
 
+	output.Statusf("resolving %s...", cmd.Name)
 	resolution, err := prov.Resolve(ctx, *src, cmd.Name, version)
 	if err != nil {
 		return fmt.Errorf("resolving: %w", err)
