@@ -79,7 +79,9 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 		return fmt.Errorf("resolved binary name %q does not match %q", resolution.BinaryName, cmd.Name)
 	}
 	if resolution.ResolvedVersion == oldVersion {
-		_ = resolution.Reader.Close()
+		if resolution.Reader != nil {
+			_ = resolution.Reader.Close()
+		}
 		fmt.Printf("%s is already up to date (%s)\n", color.GreenString(cmd.Name), oldVersion)
 		return nil
 	}
