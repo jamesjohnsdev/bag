@@ -67,12 +67,9 @@ func TestURLProviderResolve(t *testing.T) {
 		if res.ResolvedVersion != "v1.0.0" {
 			t.Errorf("ResolvedVersion = %q, want v1.0.0", res.ResolvedVersion)
 		}
-		content, readErr := io.ReadAll(res.Reader)
-		if err := errors.Join(readErr, res.Reader.Close()); err != nil {
-			t.Error(err)
-		}
-		if string(content) != "ELF" {
-			t.Errorf("content = %q, want ELF", string(content))
+		content := readResolutionBinary(t, res)
+		if content != "ELF" {
+			t.Errorf("content = %q, want ELF", content)
 		}
 	})
 
@@ -92,16 +89,15 @@ func TestURLProviderResolve(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer func() {
-			if err := res.Reader.Close(); err != nil {
-				t.Error(err)
-			}
-		}()
 		if res.BinaryName != "tool" {
 			t.Errorf("BinaryName = %q, want tool", res.BinaryName)
 		}
 		if res.ResolvedVersion != "v1.0.0" {
 			t.Errorf("ResolvedVersion = %q, want v1.0.0", res.ResolvedVersion)
+		}
+		content := readResolutionBinary(t, res)
+		if content != "ELF" {
+			t.Errorf("content = %q, want ELF", content)
 		}
 	})
 
