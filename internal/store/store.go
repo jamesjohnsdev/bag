@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -219,6 +221,122 @@ func InstallFromReader(name, version, source string, r io.ReadCloser) (result st
 	return "sha256:" + hashStr, nil
 }
 
+// InstallFromDir installs an archive's fully extracted tree (see
+// provider.Resolution.Dir/BinaryRelPath) at EntryDir(name, version),
+// preserving its directory structure so multi-file toolchains (e.g. a Go SDK
+// needing src/, pkg/ alongside bin/go) keep their layout intact. binaryRelPath
+// is the path of the resolved executable relative to srcDir.
+func InstallFromDir(name, version, source, srcDir, binaryRelPath string) (result string, err error) {
+	if !isSafeName(name) {
+		return "", fmt.Errorf("invalid binary name: %q", name)
+	}
+	if !isSafeName(version) {
+		return "", fmt.Errorf("invalid version: %q", version)
+	}
+
+	if BinaryExists(name, version) {
+		metadata, err := ReadMetadata(name, version)
+		if err != nil {
+			return "", err
+		}
+		return "sha256:" + metadata.Hash, nil
+	}
+
+	target := EntryDir(name, version)
+	// Archive contents are extracted into a reserved "tree" subdirectory,
+	// never placed directly under target: an archive can legitimately
+	// contain a top-level entry that collides with name (e.g. the Go SDK
+	// tarball wraps everything in a "go/" dir, and binName is naturally
+	// "go" too) which would otherwise collide with the symlink created
+	// below.
+	treeDir := filepath.Join(target, "tree")
+	if err := os.MkdirAll(target, 0o755); err != nil {
+		return "", fmt.Errorf("creating directory: %w", err)
+	}
+
+	if err := os.Rename(srcDir, treeDir); err != nil {
+		if !errors.Is(err, syscall.EXDEV) {
+			return "", fmt.Errorf("moving extracted tree: %w", err)
+		}
+		// srcDir and the store live on different filesystems - fall back to
+		// a recursive copy instead of an atomic rename.
+		if err := os.MkdirAll(treeDir, 0o755); err != nil {
+			return "", fmt.Errorf("creating directory: %w", err)
+		}
+		if err := os.CopyFS(treeDir, os.DirFS(srcDir)); err != nil {
+			return "", fmt.Errorf("copying extracted tree: %w", err)
+		}
+		if err := os.RemoveAll(srcDir); err != nil {
+			return "", fmt.Errorf("removing staged tree: %w", err)
+		}
+	}
+
+	realBin := filepath.Join(treeDir, filepath.FromSlash(binaryRelPath))
+	hashStr, err := hashFile(realBin)
+	if err != nil {
+		return "", err
+	}
+
+	if err := WriteMetadata(name, version, Metadata{
+		Source:      source,
+		Hash:        hashStr,
+		InstalledAt: time.Now(),
+	}); err != nil {
+		return "", fmt.Errorf("writing metadata: %w", err)
+	}
+
+	// BinaryPath is hardcoded to target/name everywhere else (BinaryExists,
+	// LinkToPath, Unlink, Remove) - symlink it to the real binary under
+	// tree/ so none of those need to change.
+	linkName := BinaryPath(name, version)
+	rel, err := filepath.Rel(target, realBin)
+	if err != nil {
+		return "", fmt.Errorf("resolving binary path: %w", err)
+	}
+	if err := os.Symlink(rel, linkName); err != nil {
+		return "", fmt.Errorf("linking binary: %w", err)
+	}
+
+	// installed = read-only, matching InstallFromReader/InstallLocal - strip
+	// write bits tree-wide. Dirs keep exec so they stay traversable/readable.
+	err = filepath.WalkDir(target, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return os.Chmod(path, 0o555)
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		return os.Chmod(path, info.Mode().Perm()&^0o222)
+	})
+	if err != nil {
+		return "", fmt.Errorf("making install read-only: %w", err)
+	}
+
+	return "sha256:" + hashStr, nil
+}
+
+// hashFile returns the sha256 hash (hex-encoded, no prefix) of the file at path.
+func hashFile(path string) (result string, err error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("opening %s: %w", path, err)
+	}
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("closing %s: %w", path, cerr))
+		}
+	}()
+	hash := sha256.New()
+	if _, err := io.Copy(hash, f); err != nil {
+		return "", fmt.Errorf("hashing %s: %w", path, err)
+	}
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
 // LinkToPath links a stored binary to path
 func LinkToPath(name, version, binDir string) error {
 	if !isSafeName(name) {
@@ -263,7 +381,23 @@ func Remove(name, version string) error {
 		return fmt.Errorf("supplied version '%s' is not safe", version)
 	}
 	entryDir := EntryDir(name, version)
-	if err := os.Chmod(entryDir, 0o755); err != nil {
+	if _, err := os.Stat(entryDir); err != nil {
+		return fmt.Errorf("making entry dir writable: %w", err)
+	}
+	// A tree install leaves nested directories read-only too, so every
+	// directory under entryDir needs write permission restored before
+	// RemoveAll can unlink the files inside it - chmod-ing entryDir alone
+	// only unblocks removal of entryDir's direct children.
+	err := filepath.WalkDir(entryDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return os.Chmod(path, 0o755)
+		}
+		return nil
+	})
+	if err != nil {
 		return fmt.Errorf("making entry dir writable: %w", err)
 	}
 	if err := os.RemoveAll(entryDir); err != nil {

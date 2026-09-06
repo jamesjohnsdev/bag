@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -36,9 +38,11 @@ func newTestProvider(t *testing.T, mux *http.ServeMux) GithubProvider {
 }
 
 type tarEntry struct {
-	name    string
-	mode    int64
-	content string
+	name     string
+	mode     int64
+	content  string
+	typeflag byte // zero value is auto-promoted to a regular file by tar.Writer
+	linkname string
 }
 
 type zipEntry struct {
@@ -47,13 +51,31 @@ type zipEntry struct {
 	content string
 }
 
+// readResolutionBinary reads the resolved binary's content off disk and
+// registers res.Cleanup to run at test end.
+func readResolutionBinary(t *testing.T, res Resolution) string {
+	t.Helper()
+	if res.Cleanup != nil {
+		t.Cleanup(func() {
+			if err := res.Cleanup(); err != nil {
+				t.Errorf("cleanup: %v", err)
+			}
+		})
+	}
+	data, err := os.ReadFile(filepath.Join(res.Dir, res.BinaryRelPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
 func makeTarGz(t *testing.T, entries []tarEntry) io.ReadCloser {
 	t.Helper()
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
 	tw := tar.NewWriter(gw)
 	for _, e := range entries {
-		hdr := &tar.Header{Name: e.name, Mode: e.mode, Size: int64(len(e.content))}
+		hdr := &tar.Header{Name: e.name, Mode: e.mode, Size: int64(len(e.content)), Typeflag: e.typeflag, Linkname: e.linkname}
 		if err := tw.WriteHeader(hdr); err != nil {
 			t.Fatal(err)
 		}
@@ -289,23 +311,15 @@ func TestExtractTarball(t *testing.T) {
 			if tt.wantErr {
 				return
 			}
-			defer func() {
-				if err := res.Reader.Close(); err != nil {
-					t.Fatal(err)
-				}
-			}()
 			if res.BinaryName != tt.wantBin {
 				t.Errorf("BinaryName = %q, want %q", res.BinaryName, tt.wantBin)
 			}
 			if res.ResolvedVersion != "v1.0.0" {
 				t.Errorf("ResolvedVersion = %q, want v1.0.0", res.ResolvedVersion)
 			}
-			content, err := io.ReadAll(res.Reader)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if string(content) != "ELF" {
-				t.Errorf("content = %q, want ELF", string(content))
+			content := readResolutionBinary(t, res)
+			if content != "ELF" {
+				t.Errorf("content = %q, want ELF", content)
 			}
 		})
 	}
@@ -353,25 +367,78 @@ func TestExtractZip(t *testing.T) {
 			if tt.wantErr {
 				return
 			}
-			defer func() {
-				if err := res.Reader.Close(); err != nil {
-					t.Fatal(err)
-				}
-			}()
 			if res.BinaryName != tt.wantBin {
 				t.Errorf("BinaryName = %q, want %q", res.BinaryName, tt.wantBin)
 			}
 			if res.ResolvedVersion != "v1.0.0" {
 				t.Errorf("ResolvedVersion = %q, want v1.0.0", res.ResolvedVersion)
 			}
-			content, err := io.ReadAll(res.Reader)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if string(content) != "ELF" {
-				t.Errorf("content = %q, want ELF", string(content))
+			content := readResolutionBinary(t, res)
+			if content != "ELF" {
+				t.Errorf("content = %q, want ELF", content)
 			}
 		})
+	}
+}
+
+func TestExtractTarballPreservesSiblings(t *testing.T) {
+	entries := []tarEntry{
+		{name: "go/bin/go", mode: 0o755, content: "GOBIN"},
+		{name: "go/src/foo.go", mode: 0o644, content: "package foo"},
+		{name: "go/pkg/tool/compile", mode: 0o644, content: "toolbin"},
+	}
+	res, err := extractTarball(makeTarGz(t, entries), "", "v1.0.0")
+	if err != nil {
+		t.Fatalf("extractTarball() error = %v", err)
+	}
+	if res.BinaryRelPath != filepath.FromSlash("go/bin/go") {
+		t.Errorf("BinaryRelPath = %q, want go/bin/go", res.BinaryRelPath)
+	}
+	content := readResolutionBinary(t, res)
+	if content != "GOBIN" {
+		t.Errorf("binary content = %q, want GOBIN", content)
+	}
+	sibling, err := os.ReadFile(filepath.Join(res.Dir, "go", "src", "foo.go"))
+	if err != nil {
+		t.Fatalf("sibling file missing: %v", err)
+	}
+	if string(sibling) != "package foo" {
+		t.Errorf("sibling content = %q, want %q", sibling, "package foo")
+	}
+	tool, err := os.ReadFile(filepath.Join(res.Dir, "go", "pkg", "tool", "compile"))
+	if err != nil {
+		t.Fatalf("nested sibling file missing: %v", err)
+	}
+	if string(tool) != "toolbin" {
+		t.Errorf("nested sibling content = %q, want %q", tool, "toolbin")
+	}
+}
+
+func TestExtractTarballPathTraversal(t *testing.T) {
+	entries := []tarEntry{{name: "../evil", mode: 0o755, content: "ELF"}}
+	if _, err := extractTarball(makeTarGz(t, entries), "", "v1.0.0"); err == nil {
+		t.Fatal("expected error for path escaping extraction root")
+	}
+}
+
+func TestExtractTarballUnsupportedEntryType(t *testing.T) {
+	entries := []tarEntry{{name: "link", typeflag: tar.TypeSymlink, linkname: "/etc/passwd"}}
+	if _, err := extractTarball(makeTarGz(t, entries), "", "v1.0.0"); err == nil {
+		t.Fatal("expected error for unsupported (symlink) entry type")
+	}
+}
+
+func TestExtractZipPathTraversal(t *testing.T) {
+	entries := []zipEntry{{name: "../evil", mode: 0o755, content: "ELF"}}
+	if _, err := extractZip(makeZip(t, entries), "", "v1.0.0"); err == nil {
+		t.Fatal("expected error for path escaping extraction root")
+	}
+}
+
+func TestExtractZipUnsupportedEntryType(t *testing.T) {
+	entries := []zipEntry{{name: "link", mode: fs.ModeSymlink | 0o777, content: "target"}}
+	if _, err := extractZip(makeZip(t, entries), "", "v1.0.0"); err == nil {
+		t.Fatal("expected error for unsupported (symlink) entry type")
 	}
 }
 
