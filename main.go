@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
+	"os"
+	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/fatih/color"
@@ -29,9 +33,30 @@ func main() {
 		color.BlueString(version), color.BlueString(commitSHA), color.BlueString(buildTime),
 	)
 
-	ctx := kong.Parse(&cmd.CLI{}, kong.Name("bag"), kong.BindTo(context.Background(), (*context.Context)(nil)), cmd.Description, kong.Vars{
+	parser, err := kong.New(&cmd.CLI{}, kong.Name("bag"), kong.BindTo(context.Background(), (*context.Context)(nil)), cmd.Description, kong.Vars{
 		"version": versionString,
 	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if len(os.Args) > 1 && !strings.HasPrefix(os.Args[1], "-") && !cmd.IsKnown(parser, os.Args[1]) {
+		handled, err := cmd.RunCustom(os.Args[1], os.Args[2:])
+		if handled {
+			if err != nil {
+				var exitErr *exec.ExitError
+				if errors.As(err, &exitErr) {
+					os.Exit(exitErr.ExitCode())
+				}
+				log.Fatalf("running command : %s", err.Error())
+			}
+			return
+		}
+		// silently pass through to kong handling if cust. doesn't work
+	}
+
+	ctx, err := parser.Parse(os.Args[1:])
+	parser.FatalIfErrorf(err)
 
 	if runtime.GOOS != "windows" && ctx.Command() != "man-install" {
 		cmd.EnsureManPage(ctx.Model)

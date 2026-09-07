@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/alecthomas/kong"
+
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 )
 
@@ -27,4 +29,13 @@ func workSpace() (WorkSpace, error) {
 		binDir:  binDir,
 		manPath: manPath,
 	}, nil
+}
+
+func IsKnown(parser *kong.Kong, command string) bool {
+	for _, knownCmd := range parser.Model.Children {
+		if command == knownCmd.Name {
+			return true
+		}
+	}
+	return false
 }
