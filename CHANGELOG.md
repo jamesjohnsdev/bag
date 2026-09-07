@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/jamesjohnsdev/bag/compare/v0.3.0...v0.3.1) (2026-09-07)
+
+
+### Features
+
+* custom commands ([9dbf5c1](https://github.com/jamesjohnsdev/bag/commit/9dbf5c14ef6820334cf5e11ec73deaa4f1cd18fc))
+
 ## [0.3.0](https://github.com/jamesjohnsdev/bag/compare/v0.2.2...v0.3.0) (2026-09-07)
 
 
