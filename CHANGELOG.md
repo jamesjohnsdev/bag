@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/jamesjohnsdev/bag/compare/v0.2.2...v0.3.0) (2026-09-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename flag to `Tag` when specifying version to avoid clash
+
+### Features
+
+* loading bars & better output on update and add ([2e04b9c](https://github.com/jamesjohnsdev/bag/commit/2e04b9cbe23f99d6f5b2ccfbe63954a236165488))
+* version flag ([a9b5e98](https://github.com/jamesjohnsdev/bag/commit/a9b5e985aa3867709bc68f05a929b485e0f7c952))
+
+
+### Bug Fixes
+
+* nil check against early return during update when already up-to-date ([71d298a](https://github.com/jamesjohnsdev/bag/commit/71d298ac2de27ce7751a6c240ea917079d9de0b7))
+* rename flag to `Tag` when specifying version to avoid clash ([5ce3860](https://github.com/jamesjohnsdev/bag/commit/5ce38606c5e8cf7372fca943ffa585ce197d83ab))
+
 ## [0.2.2](https://github.com/jamesjohnsdev/bag/compare/v0.2.1...v0.2.2) (2026-09-06)
 
 
