@@ -10,7 +10,7 @@ I recommend to install using Go.
 go install github.com/jamesjohnsdev/bag@latest
 ```
 
-Otherwise, you can download the binary from the [releases](https://github.com/jamesjarvis/bag/releases) page.
+Otherwise, you can download the binary from the [releases](https://github.com/jamesjohnsdev/bag/releases) page.
 
 ## Usage
 
