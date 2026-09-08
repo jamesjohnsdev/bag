@@ -17,6 +17,7 @@ import (
 type AddCmd struct {
 	Source string `arg:"" help:"Path or remote source"`
 	Local  bool   `flag:"" help:"Install a local binary"`
+	Script bool   `flag:"" help:"Specify source is a script"`
 	Name   string `flag:"" help:"Override the name of the binary"`
 	Tag    string `flag:"" help:"If direct link or local, set the version, otherwise choose version to download"`
 }
@@ -32,8 +33,14 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		version     string
 		binaryEntry manifest.BinaryEntry
 		hash        string
+		isScript    bool // default is false
 	)
 	storedSource := cmd.Source
+	binType := manifest.BinaryType
+	if cmd.Script {
+		binType = manifest.ScriptType
+		isScript = true // hacky: prevent import manifest into provider
+	}
 
 	// download binary
 	if cmd.Local {
@@ -63,7 +70,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 			stripped := provider.StripVersionTag(*src)
 			storedSource = stripped.String()
 		}
-		provider, err := provider.Dispatch(cmd.Source, client)
+		provider, err := provider.Dispatch(cmd.Source, client, isScript)
 		if err != nil {
 			return fmt.Errorf("dispatching provider: %w", err)
 		}
@@ -107,7 +114,7 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 	}
 	// TODO: consider moving this binaryEntry and LinkToPath to within postInstall
 	binaryEntry = manifest.BinaryEntry{
-		Type:   "binary",
+		Type:   binType,
 		Active: version,
 		Versions: map[string]manifest.VersionEntry{
 			version: {Source: storedSource},

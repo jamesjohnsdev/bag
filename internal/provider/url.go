@@ -28,6 +28,9 @@ func (provider URLProvider) Detect(src url.URL) bool {
 }
 
 func (provider URLProvider) Resolve(ctx context.Context, src url.URL, binName, version string) (Resolution, error) {
+	if version == "" {
+		version = "unknown"
+	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, src.String(), nil)
 	if err != nil {
 		return Resolution{}, fmt.Errorf("creating request for %s: %w", src.String(), err)

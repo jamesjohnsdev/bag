@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
+
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 )
 
@@ -33,7 +34,7 @@ func (cmd *ViewCmd) Run(context.Context) error {
 
 	// TODO: improve the results output here.
 	fmt.Printf("Source: %s\n", color.BlueString(activeVersion.Source))
-	fmt.Printf("Type: %s\n", color.BlueString(entry.Type))
+	fmt.Printf("Type: %s\n", color.BlueString(string(entry.Type)))
 	fmt.Printf("Version: %s\n", color.BlueString(entry.Active))
 
 	return nil

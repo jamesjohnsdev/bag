@@ -32,24 +32,29 @@ type Provider interface {
 }
 
 // buildReg generates the registry using constructors and inserts the httpclient
-func buildReg(client *http.Client) (registry []Provider, err error) {
-	ghProvider, err := NewGithubProvider(client)
-	if err != nil {
-		return []Provider{}, fmt.Errorf("registering github provider: %w", err)
+func buildReg(client *http.Client, isScript bool) (registry []Provider, err error) {
+	if isScript {
+		scriptProvider := NewURLScriptProvider(client)
+		return []Provider{&scriptProvider}, nil
+	} else {
+		ghProvider, err := NewGithubProvider(client)
+		if err != nil {
+			return []Provider{}, fmt.Errorf("registering github provider: %w", err)
+		}
+		return []Provider{
+			ghProvider,
+			NewURLProvider(client),
+		}, nil
 	}
-	return []Provider{
-		ghProvider,
-		NewURLProvider(client),
-	}, nil
 }
 
 // Dispatch checks which provider is needed, and returns it
-func Dispatch(source string, client *http.Client) (Provider, error) {
+func Dispatch(source string, client *http.Client, isScript bool) (Provider, error) {
 	srcUrl, err := url.Parse(source)
 	if err != nil {
 		return nil, fmt.Errorf("parsing URL: %w", err)
 	}
-	registry, err := buildReg(client)
+	registry, err := buildReg(client, isScript)
 	if err != nil {
 		return nil, fmt.Errorf("building provider register: %w", err)
 	}

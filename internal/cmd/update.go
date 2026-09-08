@@ -27,8 +27,10 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 		return fmt.Errorf("getting workspace: %w", err)
 	}
 
-	// for future use
-	var version string
+	var (
+		version  string // for future use
+		isScript bool
+	)
 
 	man, err := manifest.Parse(ws.manPath)
 	if err != nil {
@@ -39,11 +41,18 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to find %s in manifest", cmd.Name)
 	}
 	oldVersion := entry.Active
+	if entry.Type == manifest.ScriptType {
+		isScript = true
+	}
 
 	src, err := url.Parse(entry.Versions[entry.Active].Source)
 	if err != nil {
 		return fmt.Errorf("parsing stored 'source': %w", err)
 	}
+	// TODO: direct-URL sources (including scripts) have no resolvable version to
+	// compare against, so update can't tell whether content changed without
+	// fetching and hashing it - and even then, a changed hash needs a version
+	// to record, which may mean prompting the user to bump it manually.
 	if provider.DirectURL(*src) {
 		return fmt.Errorf("don't currently support direct urls")
 	}
@@ -53,7 +62,7 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	*src = provider.StripVersionTag(*src)
 	client := httpclient.New()
 
-	prov, err := provider.Dispatch(src.String(), client)
+	prov, err := provider.Dispatch(src.String(), client, isScript)
 	if err != nil {
 		return fmt.Errorf("dispatching: %w", err)
 	}

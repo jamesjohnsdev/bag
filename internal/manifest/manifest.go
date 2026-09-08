@@ -7,6 +7,13 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+type BinType string
+
+const (
+	BinaryType BinType = "binary"
+	ScriptType BinType = "script"
+)
+
 type Manifest struct {
 	Commands map[string]string
 	Binaries map[string]BinaryEntry
@@ -18,7 +25,7 @@ type VersionEntry struct {
 
 // TODO: change to Goa and set up sum type for `Type` field
 type BinaryEntry struct {
-	Type     string                  `toml:"type"` // "binary" | "script"
+	Type     BinType                 `toml:"type"` // "binary" | "script"
 	Active   string                  `toml:"active"`
 	Versions map[string]VersionEntry `toml:"versions"`
 }
@@ -50,7 +57,7 @@ func Parse(path string) (*Manifest, error) {
 		// Expected behaviour is to default to binary
 		entry := BinaryEntry{Type: "binary", Versions: make(map[string]VersionEntry)}
 		if typ, ok := binFields["type"].(string); ok {
-			entry.Type = typ
+			entry.Type = BinType(typ)
 		}
 		if active, ok := binFields["active"].(string); ok {
 			entry.Active = active
