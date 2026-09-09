@@ -51,7 +51,7 @@ func (provider GoProvider) Resolve(ctx context.Context, src url.URL, binName str
 	if err != nil {
 		return Resolution{}, fmt.Errorf("creating temp dir: %w", err)
 	}
-	cleanup := func() error { return os.RemoveAll(tmpDir) } // INFO: could I just defer
+	cleanup := func() error { return os.RemoveAll(tmpDir) }
 
 	cmd := exec.CommandContext(ctx, "go", "install", fmt.Sprintf("%s@%s", parts[0], version))
 	cmd.Env = append(os.Environ(), "GOBIN="+tmpDir)
