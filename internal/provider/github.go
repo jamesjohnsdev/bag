@@ -135,7 +135,14 @@ func (provider GithubProvider) downloadReleaseAsset(
 	}
 	output.Statusf("%s %s (%s)", displayName, version, output.HumanSize(assetSize))
 	wrappedRC := output.WrapProgress(rc, assetSize, binName)
-	res, err := handleAssetVariations(wrappedRC, binName, version, extension)
+	// raw binary assets (no archive) carry no embedded name to fall back on,
+	// unlike zip/tar.gz where the binary name is discovered from the archive
+	// contents, so default to the repo name when the caller didn't set one.
+	rawBinName := binName
+	if extension == "" && rawBinName == "" {
+		rawBinName = repo
+	}
+	res, err := handleAssetVariations(wrappedRC, rawBinName, version, extension)
 	res.Size = assetSize
 	return res, err
 }

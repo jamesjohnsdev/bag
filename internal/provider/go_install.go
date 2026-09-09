@@ -70,7 +70,7 @@ func (provider GoProvider) Resolve(ctx context.Context, src url.URL, binName str
 		}
 		modVers, err := parseGoModVersion(out)
 		if err != nil {
-			return Resolution{}, fmt.Errorf("parsing go mod version", err)
+			return Resolution{}, fmt.Errorf("parsing go mod version: %w", err)
 		}
 		version = modVers
 	}
