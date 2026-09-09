@@ -44,6 +44,7 @@ func buildReg(client *http.Client, isScript bool) (registry []Provider, err erro
 		return []Provider{
 			ghProvider,
 			NewURLProvider(client),
+			NewGoProvider(),
 		}, nil
 	}
 }
