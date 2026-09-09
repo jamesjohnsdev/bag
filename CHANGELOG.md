@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.2](https://github.com/jamesjohnsdev/bag/compare/v0.3.1...v0.3.2) (2026-09-09)
+
+
+### Features
+
+* go-install support ([53fbf50](https://github.com/jamesjohnsdev/bag/commit/53fbf50315350594261a876cb3c348420a2a8bbd))
+* script support ([84c93dd](https://github.com/jamesjohnsdev/bag/commit/84c93dd1d540d07aaa3d9ac796e6562de1bf94dd))
+
+
+### Bug Fixes
+
+* direct url binaries handle no default version better ([84c93dd](https://github.com/jamesjohnsdev/bag/commit/84c93dd1d540d07aaa3d9ac796e6562de1bf94dd))
+* handle default binary name for direct binary assets without archive ([6160761](https://github.com/jamesjohnsdev/bag/commit/6160761a26b094de5c18139d1958d1f22f81de3e))
+
 ## [0.3.1](https://github.com/jamesjohnsdev/bag/compare/v0.3.0...v0.3.1) (2026-09-07)
 
 
