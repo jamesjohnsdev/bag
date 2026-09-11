@@ -18,7 +18,20 @@ type CLI struct {
 	Init   InitCmd   `cmd:"" help:"Initialise a bag"`
 	Add    AddCmd    `cmd:"" help:"Add a binary"`
 	Update UpdateCmd `cmd:"" help:"Update a binary"`
+	List   ListCmd   `cmd:"" help:"List all stored versions of a binary"`
 	Remove RemoveCmd `cmd:"" help:"Remove an installed binary"`
 	View   ViewCmd   `cmd:"" help:"View details of an installed binary"`
 	Tool   ToolCmd   `cmd:"" help:"Manage project tools"`
 }
+
+// TODO: Consider changing definitions for commented out ones
+var (
+	// _ command = (*ManInstallCmd)(nil)
+	_ command = (*InitCmd)(nil)
+	_ command = (*AddCmd)(nil)
+	_ command = (*UpdateCmd)(nil)
+	_ command = (*ListCmd)(nil)
+	_ command = (*RemoveCmd)(nil)
+	_ command = (*ViewCmd)(nil)
+	_ command = (*ToolCmd)(nil)
+)
