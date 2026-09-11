@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 
 type InitCmd struct{}
 
-func (c *InitCmd) Run() error {
+func (c *InitCmd) Run(ctx context.Context) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err

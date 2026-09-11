@@ -1,6 +1,14 @@
 package cmd
 
-import "github.com/alecthomas/kong"
+import (
+	"context"
+
+	"github.com/alecthomas/kong"
+)
+
+type command interface {
+	Run(ctx context.Context) error
+}
 
 type CLI struct {
 	Version kong.VersionFlag `help:"Print version and exit"`

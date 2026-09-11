@@ -13,7 +13,7 @@ type ViewCmd struct {
 	Name string `arg:"" help:"Name of the binary to view"`
 }
 
-func (cmd *ViewCmd) Run(context.Context) error {
+func (cmd *ViewCmd) Run(ctx context.Context) error {
 	ws, err := workSpace()
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
