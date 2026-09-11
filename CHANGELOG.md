@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/jamesjohnsdev/bag/compare/v0.3.2...v0.3.3) (2026-09-11)
+
+
+### Features
+
+* `bag list` command to show stored versions ([f15b07f](https://github.com/jamesjohnsdev/bag/commit/f15b07fb34aa154f4b882be1e98d58c4ea0e6aa9))
+* `which` cmd to show active binary path ([4116084](https://github.com/jamesjohnsdev/bag/commit/41160848d334db377f045e6932653defd1403fa7))
+
 ## [0.3.2](https://github.com/jamesjohnsdev/bag/compare/v0.3.1...v0.3.2) (2026-09-09)
 
 
