@@ -125,6 +125,9 @@ func viewManifest(manPath string) error {
 		editor = "vi"
 	}
 	cmd := exec.Command(editor, manPath)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
