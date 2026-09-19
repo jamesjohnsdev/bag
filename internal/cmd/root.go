@@ -20,6 +20,7 @@ type CLI struct {
 	Update   UpdateCmd   `cmd:"" help:"Update a binary"`
 	List     ListCmd     `cmd:"" help:"List all stored versions of a binary"`
 	Manifest ManifestCmd `cmd:"" help:"Interact with the manifest"`
+	Lock     LockCmd     `cmd:"" help:"Interact with the lock file"`
 	Remove   RemoveCmd   `cmd:"" help:"Remove an installed binary"`
 	View     ViewCmd     `cmd:"" help:"View details of an installed binary"`
 	Which    WhichCmd    `cmd:"" help:"Find the stored path of a binary"`
@@ -37,4 +38,16 @@ var (
 	_ command = (*ViewCmd)(nil)
 	_ command = (*WhichCmd)(nil)
 	_ command = (*ToolCmd)(nil)
+
+	_ command = (*ManifestCheckCmd)(nil)
+	_ command = (*ManifestListCmd)(nil)
+	_ command = (*ManifestViewCmd)(nil)
+	_ command = (*ManifestToolCheckCmd)(nil)
+	_ command = (*ManifestToolListCmd)(nil)
+	_ command = (*ManifestToolViewCmd)(nil)
+
+	_ command = (*LockCheckCmd)(nil)
+	_ command = (*LockViewCmd)(nil)
+	_ command = (*LockToolCheckCmd)(nil)
+	_ command = (*LockToolViewCmd)(nil)
 )
