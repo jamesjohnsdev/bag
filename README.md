@@ -144,3 +144,30 @@ bag verify # Integrity check
 bag clean # Removes unreferenced bags from the store
 bag update # Updates declared bags and the lock file
 ```
+
+### View Manifest & Lock
+
+You can interact with the manifest and lock file directly. You can either view or check.
+
+`view` will open the file inside your default editor.
+
+```sh
+bag manifest view
+# or for lock file
+bag lock view
+```
+
+`check` is for verifying the file matches the required format
+
+```sh
+bag manifest check # similar to lock
+```
+
+Manifest also has the `list` command, which prints a list of binaries, scripts and commands to the terminal.
+
+```sh
+# print a complete list of all manifest items
+bag manifest list
+# print a filtered list of manifest items
+bag manifest list --scripts # similar flag for others
+```
