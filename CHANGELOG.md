@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.4](https://github.com/jamesjohnsdev/bag/compare/v0.3.3...v0.3.4) (2026-09-20)
+
+
+### Features
+
+* `bag lock <view or check>` ([1a40f1f](https://github.com/jamesjohnsdev/bag/commit/1a40f1fc222a56249eba6493411ac0a52437814f))
+* manifest commands ([acc0937](https://github.com/jamesjohnsdev/bag/commit/acc0937e6422239c0aa80c6b7314d5e27d161bd7))
+
+
+### Bug Fixes
+
+* editor wired up with stdin/out/err ([4c03537](https://github.com/jamesjohnsdev/bag/commit/4c035379f47c4fdab430e87535a3c02aa7c0e0f0))
+
 ## [0.3.3](https://github.com/jamesjohnsdev/bag/compare/v0.3.2...v0.3.3) (2026-09-11)
 
 
