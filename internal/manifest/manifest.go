@@ -120,3 +120,16 @@ func RemoveBinary(manifestPath, name string) error {
 	delete(manifest.Binaries, name)
 	return Write(manifestPath, manifest)
 }
+
+func GetBinaryDetails(manPath, binName string) (BinaryEntry, error) {
+	man, err := Parse(manPath)
+	if err != nil {
+		return BinaryEntry{}, fmt.Errorf("getting manifest: %w", err)
+	}
+
+	entry, ok := man.Binaries[binName]
+	if !ok {
+		return BinaryEntry{}, fmt.Errorf("unable to find manifest entry for %s", binName)
+	}
+	return entry, nil
+}
