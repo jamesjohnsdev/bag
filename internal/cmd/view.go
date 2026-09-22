@@ -18,15 +18,12 @@ func (cmd *ViewCmd) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
 	}
-	man, err := manifest.Parse(ws.manPath)
+
+	entry, err := manifest.GetBinaryDetails(ws.manPath, cmd.Name)
 	if err != nil {
-		return fmt.Errorf("getting manifest: %w", err)
+		return fmt.Errorf("getting binary details: %w", err)
 	}
 
-	entry, ok := man.Binaries[cmd.Name]
-	if !ok {
-		return fmt.Errorf("unable to find manifest entry for %s", cmd.Name)
-	}
 	activeVersion, ok := entry.Versions[entry.Active]
 	if !ok {
 		return fmt.Errorf("no active version recorded for %s", cmd.Name)
