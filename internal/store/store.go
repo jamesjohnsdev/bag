@@ -22,6 +22,10 @@ type Metadata struct {
 	InstalledAt time.Time `toml:"installed_at"`
 }
 
+// wOK is the POSIX write-access bit for syscall.Access; the stdlib syscall
+// package does not export the R_OK/W_OK/X_OK constants.
+const wOK = 0x2
+
 func isSafeName(name string) bool {
 	if name == "" || name == "." || name == ".." {
 		return false
@@ -387,6 +391,17 @@ func Remove(name, version string) error {
 	if _, err := os.Stat(entryDir); err != nil {
 		return fmt.Errorf("making entry dir writable: %w", err)
 	}
+
+	// RemoveAll deletes a directory's children before it unlinks the
+	// directory itself, so a read-only parent would let it destroy the
+	// entry and only then fail to remove the dir. Probe the parent up front
+	// so Remove either fully succeeds or leaves the entry untouched,
+	// allowing callers to roll back.
+	parent := filepath.Dir(entryDir)
+	if err := syscall.Access(parent, wOK); err != nil {
+		return fmt.Errorf("checking write access to %s: %w", parent, err)
+	}
+
 	// A tree install leaves nested directories read-only too, so every
 	// directory under entryDir needs write permission restored before
 	// RemoveAll can unlink the files inside it - chmod-ing entryDir alone
