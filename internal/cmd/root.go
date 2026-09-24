@@ -18,6 +18,7 @@ type CLI struct {
 	Init     InitCmd     `cmd:"" help:"Initialise a bag"`
 	Add      AddCmd      `cmd:"" help:"Add a binary"`
 	Update   UpdateCmd   `cmd:"" help:"Update a binary"`
+	Use      UseCmd      `cmd:"" help:"Select a specific version to use"`
 	List     ListCmd     `cmd:"" help:"List all stored versions of a binary"`
 	Manifest ManifestCmd `cmd:"" help:"Interact with the manifest"`
 	Lock     LockCmd     `cmd:"" help:"Interact with the lock file"`
@@ -38,6 +39,7 @@ var (
 	_ command = (*ViewCmd)(nil)
 	_ command = (*WhichCmd)(nil)
 	_ command = (*ToolCmd)(nil)
+	_ command = (*UseCmd)(nil)
 
 	_ command = (*ManifestCheckCmd)(nil)
 	_ command = (*ManifestListCmd)(nil)
