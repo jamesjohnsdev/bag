@@ -345,6 +345,9 @@ func LinkToPath(name, version, binDir string) error {
 	if !isSafeName(version) {
 		return fmt.Errorf("invalid version: %q", version)
 	}
+	if !BinaryExists(name, version) {
+		return fmt.Errorf("%s %s is not installed in the store", name, version)
+	}
 	// 0755 = rwxr-xr-x
 	if err := os.MkdirAll(binDir, 0o755); err != nil {
 		return fmt.Errorf("creating bin dir: %w", err)
