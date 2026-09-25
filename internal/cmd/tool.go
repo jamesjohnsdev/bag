@@ -5,6 +5,7 @@ import (
 )
 
 type ToolCmd struct {
+	Init     InitToolCmd     `cmd:"" name:"init" help:"Initialise a project-local bag"`
 	Manifest ManifestToolCmd `cmd:"" help:"Manifest commands for local project tools"`
 }
 

@@ -32,6 +32,7 @@ type CLI struct {
 var (
 	// _ command = (*ManInstallCmd)(nil)
 	_ command = (*InitCmd)(nil)
+	_ command = (*InitToolCmd)(nil)
 	_ command = (*AddCmd)(nil)
 	_ command = (*UpdateCmd)(nil)
 	_ command = (*ListCmd)(nil)
