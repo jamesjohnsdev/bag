@@ -14,7 +14,7 @@ type ViewCmd struct {
 }
 
 func (cmd *ViewCmd) Run(ctx context.Context) error {
-	ws, err := workSpace()
+	ws, err := workSpace(false)
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
 	}
