@@ -27,39 +27,45 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
 	}
+	return addBinary(ctx, ws.manPath, ws.binDir, cmd.Source, cmd.Local, cmd.Script, cmd.Name, cmd.Tag)
+}
 
+// addBinary resolves and installs a binary into the given manifest/binDir, shared by
+// AddCmd and its project-scoped tool equivalent.
+func addBinary(ctx context.Context, manPath, binDir, source string, local, script bool, name, tag string) error {
 	var (
 		binName     string
 		version     string
 		binaryEntry manifest.BinaryEntry
 		hash        string
 		isScript    bool // default is false
+		err         error
 	)
-	storedSource := cmd.Source
+	storedSource := source
 	binType := manifest.BinaryType
-	if cmd.Script {
+	if script {
 		binType = manifest.ScriptType
 		isScript = true // hacky: prevent import manifest into provider
 	}
 
 	// download binary
-	if cmd.Local {
+	if local {
 		version = "local"
-		binName = filepath.Base(cmd.Source)
-		if cmd.Tag != "" {
-			version = cmd.Tag
+		binName = filepath.Base(source)
+		if tag != "" {
+			version = tag
 		}
-		if cmd.Name != "" {
-			binName = cmd.Name
+		if name != "" {
+			binName = name
 		}
-		hash, err = store.InstallLocal(binName, version, cmd.Source)
+		hash, err = store.InstallLocal(binName, version, source)
 		if err != nil {
 			return fmt.Errorf("installing locally: %w", err)
 		}
 
 	} else {
 		client := httpclient.New()
-		src, err := url.Parse(cmd.Source)
+		src, err := url.Parse(source)
 		if err != nil {
 			return fmt.Errorf("parsing source: %w", err)
 		}
@@ -70,18 +76,18 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 			stripped := provider.StripVersionTag(*src)
 			storedSource = stripped.String()
 		}
-		provider, err := provider.Dispatch(cmd.Source, client, isScript)
+		prov, err := provider.Dispatch(source, client, isScript)
 		if err != nil {
 			return fmt.Errorf("dispatching provider: %w", err)
 		}
-		if cmd.Tag != "" {
-			version = cmd.Tag
+		if tag != "" {
+			version = tag
 		}
-		if cmd.Name != "" {
-			binName = cmd.Name
+		if name != "" {
+			binName = name
 		}
-		output.Statusf("resolving %s...", cmd.Source)
-		resolution, err := provider.Resolve(ctx, *src, binName, version)
+		output.Statusf("resolving %s...", source)
+		resolution, err := prov.Resolve(ctx, *src, binName, version)
 		if err != nil {
 			return fmt.Errorf("resolving: %w", err)
 		}
@@ -101,12 +107,12 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 		}
 		binName, version = resolution.BinaryName, resolution.ResolvedVersion
 		if resolution.Dir != "" {
-			hash, err = store.InstallFromDir(binName, version, cmd.Source, resolution.Dir, resolution.BinaryRelPath)
+			hash, err = store.InstallFromDir(binName, version, source, resolution.Dir, resolution.BinaryRelPath)
 			if err != nil {
 				return fmt.Errorf("installing from dir: %w", err)
 			}
 		} else {
-			hash, err = store.InstallFromReader(binName, version, cmd.Source, resolution.Reader)
+			hash, err = store.InstallFromReader(binName, version, source, resolution.Reader)
 			if err != nil {
 				return fmt.Errorf("installing from reader: %w", err)
 			}
@@ -120,11 +126,11 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 			version: {Source: storedSource},
 		},
 	}
-	if err := store.LinkToPath(binName, version, ws.binDir); err != nil {
+	if err := store.LinkToPath(binName, version, binDir); err != nil {
 		return fmt.Errorf("installing: %w", err)
 	}
 
-	err = postInstall(ws.manPath, binName, version, hash, binaryEntry)
+	err = postInstall(manPath, binName, version, hash, binaryEntry)
 	if err != nil {
 		return fmt.Errorf("post-install: %w", err)
 	}
