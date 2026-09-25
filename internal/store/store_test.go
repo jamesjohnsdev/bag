@@ -298,3 +298,82 @@ func TestInstallFromDirInvalidName(t *testing.T) {
 		t.Fatal("expected error for unsafe version")
 	}
 }
+
+// wantExecutable returns the resolved path of the currently running test
+// binary - what LinkShim is expected to point every shim at.
+func wantExecutable(t *testing.T) string {
+	t.Helper()
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	exe, err = filepath.EvalSymlinks(exe)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return exe
+}
+
+func TestLinkShim(t *testing.T) {
+	binDir := t.TempDir()
+
+	if err := store.LinkShim("foo", binDir); err != nil {
+		t.Fatalf("LinkShim() error = %v", err)
+	}
+
+	got, err := os.Readlink(filepath.Join(binDir, "foo"))
+	if err != nil {
+		t.Fatalf("Readlink() error = %v", err)
+	}
+	if want := wantExecutable(t); got != want {
+		t.Errorf("LinkShim() target = %q, want %q", got, want)
+	}
+}
+
+func TestLinkShimIdempotent(t *testing.T) {
+	binDir := t.TempDir()
+
+	if err := store.LinkShim("foo", binDir); err != nil {
+		t.Fatalf("LinkShim() error = %v", err)
+	}
+	if err := store.LinkShim("foo", binDir); err != nil {
+		t.Fatalf("second LinkShim() error = %v", err)
+	}
+
+	got, err := os.Readlink(filepath.Join(binDir, "foo"))
+	if err != nil {
+		t.Fatalf("Readlink() error = %v", err)
+	}
+	if want := wantExecutable(t); got != want {
+		t.Errorf("LinkShim() target = %q, want %q", got, want)
+	}
+}
+
+func TestLinkShimReplacesStaleLink(t *testing.T) {
+	binDir := t.TempDir()
+
+	// Simulate a pre-shim install: a symlink pointing at some unrelated
+	// file, as the old LinkToPath-per-version model would have left behind.
+	stale := writeSrcBinary(t)
+	if err := os.Symlink(stale, filepath.Join(binDir, "foo")); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.LinkShim("foo", binDir); err != nil {
+		t.Fatalf("LinkShim() error = %v", err)
+	}
+
+	got, err := os.Readlink(filepath.Join(binDir, "foo"))
+	if err != nil {
+		t.Fatalf("Readlink() error = %v", err)
+	}
+	if want := wantExecutable(t); got != want {
+		t.Errorf("LinkShim() target = %q, want %q", got, want)
+	}
+}
+
+func TestLinkShimInvalidName(t *testing.T) {
+	if err := store.LinkShim("../evil", t.TempDir()); err == nil {
+		t.Fatal("expected error for unsafe name")
+	}
+}
