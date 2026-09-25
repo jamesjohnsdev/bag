@@ -109,10 +109,10 @@ func checkManifest(manPath string) error {
 	if err != nil {
 		fmt.Printf("%s", color.RedString("Uh oh. There's a problem with your manifest"))
 		fmt.Printf("Manifest location: %s\n", manPath)
-		fmt.Printf("Error: %s", err.Error())
+		fmt.Printf("Error: %s\n", err.Error())
 		return nil
 	}
-	fmt.Printf("%s", color.GreenString("Manifest file looks good!"))
+	fmt.Printf("%s", color.GreenString("Manifest file looks good!\n"))
 	return nil
 }
 
