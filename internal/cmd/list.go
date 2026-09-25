@@ -18,15 +18,20 @@ func (cmd ListCmd) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get workspace: %w", err)
 	}
+	return listBinaryVersions(ws.manPath, cmd.BinaryName)
+}
 
-	man, err := manifest.Parse(ws.manPath)
+// listBinaryVersions prints the stored versions of a manifest entry, shared by ListCmd
+// and its project-scoped tool equivalent.
+func listBinaryVersions(manPath, binaryName string) error {
+	man, err := manifest.Parse(manPath)
 	if err != nil {
 		return fmt.Errorf("failed to parse manifest: %w", err)
 	}
 
 	// TODO: add support to identify current version being used
-	fmt.Printf("Stored versions of %s:\n", cmd.BinaryName)
-	entry := man.Binaries[cmd.BinaryName]
+	fmt.Printf("Stored versions of %s:\n", binaryName)
+	entry := man.Binaries[binaryName]
 	for version := range entry.Versions {
 		if entry.Active == version {
 			fmt.Printf("\u2022 %s (current)\n", color.GreenString(version))
