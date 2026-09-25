@@ -15,7 +15,6 @@ type ManifestCmd struct {
 	List  ManifestListCmd  `cmd:"" help:"List executables in manifest"`
 	View  ManifestViewCmd  `cmd:"" help:"View the manifest file"`
 	Check ManifestCheckCmd `cmd:"" help:"Validate manifest matches expected format"`
-	Tool  ManifestToolCmd  `cmd:"" help:"Manifest commands for local project tools"`
 }
 
 type ManifestListCmd struct {
@@ -109,7 +108,7 @@ func checkManifest(manPath string) error {
 	if err != nil {
 		fmt.Printf("%s", color.RedString("Uh oh. There's a problem with your manifest"))
 		fmt.Printf("Manifest location: %s\n", manPath)
-		fmt.Printf("Error: %s\n", err.Error())
+		fmt.Printf("Error: %s", err.Error())
 		return nil
 	}
 	fmt.Printf("%s", color.GreenString("Manifest file looks good!\n"))
