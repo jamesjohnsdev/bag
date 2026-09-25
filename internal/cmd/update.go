@@ -20,25 +20,30 @@ type UpdateCmd struct {
 	Name string `arg:"" help:"Name of the binary to view"`
 }
 
-// initial implementation of update will only handle known sources
 func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	ws, err := workSpace()
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
 	}
+	return updateBinary(ctx, ws.manPath, ws.binDir, cmd.Name)
+}
 
+// updateBinary resolves the latest version for a known manifest entry and installs it,
+// shared by UpdateCmd and its project-scoped tool equivalent.
+// initial implementation of update will only handle known sources
+func updateBinary(ctx context.Context, manPath, binDir, name string) error {
 	var (
 		version  string // for future use
 		isScript bool
 	)
 
-	man, err := manifest.Parse(ws.manPath)
+	man, err := manifest.Parse(manPath)
 	if err != nil {
 		return fmt.Errorf("parsing manifest: %w", err)
 	}
-	entry, ok := man.Binaries[cmd.Name]
+	entry, ok := man.Binaries[name]
 	if !ok {
-		return fmt.Errorf("unable to find %s in manifest", cmd.Name)
+		return fmt.Errorf("unable to find %s in manifest", name)
 	}
 	oldVersion := entry.Active
 	if entry.Type == manifest.ScriptType {
@@ -67,8 +72,8 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 		return fmt.Errorf("dispatching: %w", err)
 	}
 
-	output.Statusf("resolving %s...", cmd.Name)
-	resolution, err := prov.Resolve(ctx, *src, cmd.Name, version)
+	output.Statusf("resolving %s...", name)
+	resolution, err := prov.Resolve(ctx, *src, name, version)
 	if err != nil {
 		return fmt.Errorf("resolving: %w", err)
 	}
@@ -86,35 +91,35 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 		filepath.Base(resolution.BinaryName) != resolution.BinaryName {
 		return fmt.Errorf("invalid binary name: %q", resolution.BinaryName)
 	}
-	if resolution.BinaryName != cmd.Name {
-		return fmt.Errorf("resolved binary name %q does not match %q", resolution.BinaryName, cmd.Name)
+	if resolution.BinaryName != name {
+		return fmt.Errorf("resolved binary name %q does not match %q", resolution.BinaryName, name)
 	}
 	if resolution.ResolvedVersion == oldVersion {
 		if resolution.Reader != nil {
 			_ = resolution.Reader.Close()
 		}
-		fmt.Printf("%s is already up to date (%s)\n", color.GreenString(cmd.Name), oldVersion)
+		fmt.Printf("%s is already up to date (%s)\n", color.GreenString(name), oldVersion)
 		return nil
 	}
 	version = resolution.ResolvedVersion
 	var hash string
 	if resolution.Dir != "" {
-		hash, err = store.InstallFromDir(cmd.Name, version, src.String(), resolution.Dir, resolution.BinaryRelPath)
+		hash, err = store.InstallFromDir(name, version, src.String(), resolution.Dir, resolution.BinaryRelPath)
 		if err != nil {
 			return fmt.Errorf("installing from dir: %w", err)
 		}
 	} else {
-		hash, err = store.InstallFromReader(cmd.Name, version, src.String(), resolution.Reader)
+		hash, err = store.InstallFromReader(name, version, src.String(), resolution.Reader)
 		if err != nil {
 			return fmt.Errorf("installing from reader: %w", err)
 		}
 	}
 
-	if err := store.Unlink(cmd.Name, ws.binDir); err != nil {
+	if err := store.Unlink(name, binDir); err != nil {
 		return fmt.Errorf("removing old symlink: %w", err)
 	}
 
-	if err := store.LinkToPath(cmd.Name, resolution.ResolvedVersion, ws.binDir); err != nil {
+	if err := store.LinkToPath(name, resolution.ResolvedVersion, binDir); err != nil {
 		return fmt.Errorf("installing: %w", err)
 	}
 
@@ -124,11 +129,11 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	}
 	entry.Active = resolution.ResolvedVersion
 	// manifest + lockfile changes
-	if err := postInstall(ws.manPath, cmd.Name, version, hash, entry); err != nil {
-		_ = store.Unlink(cmd.Name, ws.binDir)
-		_ = store.LinkToPath(cmd.Name, oldVersion, ws.binDir)
+	if err := postInstall(manPath, name, version, hash, entry); err != nil {
+		_ = store.Unlink(name, binDir)
+		_ = store.LinkToPath(name, oldVersion, binDir)
 		return fmt.Errorf("post-install: %w", err)
 	}
-	fmt.Printf("successfully updated %s\n", color.GreenString(cmd.Name))
+	fmt.Printf("successfully updated %s\n", color.GreenString(name))
 	return nil
 }
