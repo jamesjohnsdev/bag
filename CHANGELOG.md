@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.3.5](https://github.com/jamesjohnsdev/bag/compare/v0.3.4...v0.3.5) (2026-09-25)
+
+
+### Features
+
+* `use` command ([c51eca2](https://github.com/jamesjohnsdev/bag/commit/c51eca2bcceacbacac0ccfc6f760e39be13bc57a))
+* InitCmd and InitToolCmd implemented ([2d731ae](https://github.com/jamesjohnsdev/bag/commit/2d731ae3bfcea84c9656c31e6c415e464f396957))
+* resolve managed binary versions at invocation via shim ([b65a75b](https://github.com/jamesjohnsdev/bag/commit/b65a75b2357b9844556addb5003a21904d7b074d))
+
+
+### Bug Fixes
+
+* bug where `%` sign resolves after printed message ([c515e7e](https://github.com/jamesjohnsdev/bag/commit/c515e7edf0c186bf7d93977d34b44b9f645d2ff1))
+* guard against not-found binaries when linking to path ([3a675e2](https://github.com/jamesjohnsdev/bag/commit/3a675e2cd8b67ce36dbaa729f7b22df9bbf5981c))
+* handle nested tree write permissions avoiding delete ([87509ff](https://github.com/jamesjohnsdev/bag/commit/87509ff9ca867950ba168c7941cc070774378ab8))
+
 ## [0.3.4](https://github.com/jamesjohnsdev/bag/compare/v0.3.3...v0.3.4) (2026-09-20)
 
 
