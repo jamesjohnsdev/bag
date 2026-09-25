@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.6](https://github.com/jamesjohnsdev/bag/compare/v0.3.5...v0.3.6) (2026-09-25)
+
+
+### Bug Fixes
+
+* replace syscall.Access with a portable write-access probe ([c671839](https://github.com/jamesjohnsdev/bag/commit/c671839a8628908a2e1f76bf7166f1fad2f22e73))
+
 ## [0.3.5](https://github.com/jamesjohnsdev/bag/compare/v0.3.4...v0.3.5) (2026-09-25)
 
 
