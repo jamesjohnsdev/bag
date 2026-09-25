@@ -14,7 +14,7 @@ type ListCmd struct {
 }
 
 func (cmd ListCmd) Run(ctx context.Context) error {
-	ws, err := workSpace()
+	ws, err := workSpace(false)
 	if err != nil {
 		return fmt.Errorf("failed to get workspace: %w", err)
 	}

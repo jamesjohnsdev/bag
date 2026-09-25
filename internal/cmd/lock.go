@@ -20,7 +20,7 @@ type LockCmd struct {
 type LockViewCmd struct{}
 
 func (cmd *LockViewCmd) Run(ctx context.Context) error {
-	ws, err := workSpace()
+	ws, err := workSpace(false)
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
 	}
@@ -30,7 +30,7 @@ func (cmd *LockViewCmd) Run(ctx context.Context) error {
 type LockCheckCmd struct{}
 
 func (cmd *LockCheckCmd) Run(ctx context.Context) error {
-	ws, err := workSpace()
+	ws, err := workSpace(false)
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
 	}

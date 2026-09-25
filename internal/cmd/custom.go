@@ -12,7 +12,7 @@ import (
 // not to be included in root register
 func RunCustom(baseCmd string, args []string) (handled bool, err error) {
 	// TODO: handle local manifests
-	ws, err := workSpace()
+	ws, err := workSpace(false)
 	if err != nil {
 		return false, fmt.Errorf("loading workspace: %w", err)
 	}

@@ -16,7 +16,7 @@ type InitCmd struct{}
 // Run should pretty much always return an error
 // workSpace will automatically create files
 func (c *InitCmd) Run(ctx context.Context) error {
-	ws, err := workSpace()
+	ws, err := workSpace(false)
 	if err != nil {
 		return fmt.Errorf("getting workspace: %w", err)
 	}
