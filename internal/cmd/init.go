@@ -9,14 +9,33 @@ import (
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 )
 
+// InitCmd is not necessary for initialising a global bag.
+// bag will be initialised automatically without this.
 type InitCmd struct{}
 
+// Run should pretty much always return an error
+// workSpace will automatically create files
 func (c *InitCmd) Run(ctx context.Context) error {
+	ws, err := workSpace()
+	if err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	return initManifest(ws.manPath)
+}
+
+type InitToolCmd struct{}
+
+func (c *InitToolCmd) Run(ctx context.Context) error {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	manifestPath := filepath.Join(cwd, manifest.ManName)
+	return initManifest(filepath.Join(cwd, manifest.ManName))
+}
+
+// initManifest writes a fresh manifest and lock file at manifestPath, shared by InitCmd
+// and InitToolCmd.
+func initManifest(manifestPath string) error {
 	if _, err := os.Stat(manifestPath); err == nil {
 		return fmt.Errorf("already initialised: %s exists", manifestPath)
 	}
@@ -28,7 +47,7 @@ func (c *InitCmd) Run(ctx context.Context) error {
 	}
 
 	lockPath := manifest.FindLock(manifestPath)
-	err = manifest.WriteLock(lockPath, &manifest.LockFile{
+	err := manifest.WriteLock(lockPath, &manifest.LockFile{
 		Entries: map[string]map[string]manifest.LockEntry{},
 	})
 	if err == nil {
