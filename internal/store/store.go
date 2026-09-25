@@ -22,10 +22,6 @@ type Metadata struct {
 	InstalledAt time.Time `toml:"installed_at"`
 }
 
-// wOK is the POSIX write-access bit for syscall.Access; the stdlib syscall
-// package does not export the R_OK/W_OK/X_OK constants.
-const wOK = 0x2
-
 func isSafeName(name string) bool {
 	if name == "" || name == "." || name == ".." {
 		return false
@@ -415,6 +411,23 @@ func Unlink(name, binDir string) error {
 	return nil
 }
 
+// checkWritable probes dir for write access by actually creating and
+// removing a temp file in it, rather than checking permission bits directly
+// (stdlib-only, no syscall.Access - which doesn't exist on Windows - and no
+// need to reason about POSIX bits vs. Windows ACLs).
+func checkWritable(dir string) error {
+	f, err := os.CreateTemp(dir, ".bag-write-check-*")
+	if err != nil {
+		return err
+	}
+	name := f.Name()
+	if cerr := f.Close(); cerr != nil {
+		_ = os.Remove(name)
+		return cerr
+	}
+	return os.Remove(name)
+}
+
 func Remove(name, version string) error {
 	if !isSafeName(name) {
 		return fmt.Errorf("supplied name '%s' not safe", name)
@@ -433,7 +446,7 @@ func Remove(name, version string) error {
 	// so Remove either fully succeeds or leaves the entry untouched,
 	// allowing callers to roll back.
 	parent := filepath.Dir(entryDir)
-	if err := syscall.Access(parent, wOK); err != nil {
+	if err := checkWritable(parent); err != nil {
 		return fmt.Errorf("checking write access to %s: %w", parent, err)
 	}
 
