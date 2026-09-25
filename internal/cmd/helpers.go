@@ -14,27 +14,40 @@ import (
 type WorkSpace struct {
 	binDir  string
 	manPath string
+	// global is true when manPath resolved to the global manifest - either
+	// because local resolution wasn't requested, or it was and no project
+	// bag.toml was found anywhere upward from the cwd.
+	global bool
 }
 
 // workSpace resolves the manifest path and bin dir to operate on. binDir is always
 // ~/.local/bin regardless of scope - only manPath resolution differs. When local is
 // true, manifest.Get walks up from the cwd looking for a project bag.toml, falling
 // back to (and auto-creating) the global one if none is found; that fallback is what
-// the caller's `global` return value flags.
+// ws.global flags.
 func workSpace(local bool) (WorkSpace, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return WorkSpace{}, fmt.Errorf("checking home dir: %w", err)
 	}
 	binDir := filepath.Join(homeDir, ".local/bin")
-	manPath, _, err := manifest.Get(local)
+	manPath, global, err := manifest.Get(local)
 	if err != nil {
 		return WorkSpace{}, err
 	}
 	return WorkSpace{
 		binDir:  binDir,
 		manPath: manPath,
+		global:  global,
 	}, nil
+}
+
+// requireLocal errors if ws fell back to the global manifest.
+func (ws WorkSpace) requireLocal() error {
+	if ws.global {
+		return fmt.Errorf("no local bag found; run `bag tool init` first")
+	}
+	return nil
 }
 
 // linkBinary points binDir/name at version. Every managed binary except
