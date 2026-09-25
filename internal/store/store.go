@@ -364,6 +364,41 @@ func LinkToPath(name, version, binDir string) error {
 	return nil
 }
 
+// LinkShim links binDir/name at the currently running bag executable itself,
+// rather than at a specific version in the store. Idempotent: a no-op if the
+// link already points at the right place. Managed binaries resolve their
+// active version dynamically at invocation time (see cmd.RunExec), so unlike
+// LinkToPath this never needs to be re-pointed when the active version
+// changes.
+func LinkShim(name, binDir string) error {
+	if !isSafeName(name) {
+		return fmt.Errorf("invalid binary name: %q", name)
+	}
+	exePath, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("resolving bag executable: %w", err)
+	}
+	exePath, err = filepath.EvalSymlinks(exePath)
+	if err != nil {
+		return fmt.Errorf("resolving bag executable: %w", err)
+	}
+	// 0755 = rwxr-xr-x
+	if err := os.MkdirAll(binDir, 0o755); err != nil {
+		return fmt.Errorf("creating bin dir: %w", err)
+	}
+	dst := filepath.Join(binDir, name)
+	if existing, err := os.Readlink(dst); err == nil && existing == exePath {
+		return nil
+	}
+	if err := os.Remove(dst); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("removing stale shim: %w", err)
+	}
+	if err := os.Symlink(exePath, dst); err != nil {
+		return fmt.Errorf("linking shim: %w", err)
+	}
+	return nil
+}
+
 func Unlink(name, binDir string) error {
 	if !isSafeName(name) {
 		return fmt.Errorf("invalid binary name: %q", name)

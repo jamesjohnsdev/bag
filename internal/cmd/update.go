@@ -115,11 +115,17 @@ func updateBinary(ctx context.Context, manPath, binDir, name string) error {
 		}
 	}
 
-	if err := store.Unlink(name, binDir); err != nil {
-		return fmt.Errorf("removing old symlink: %w", err)
-	}
-
-	if err := store.LinkToPath(name, resolution.ResolvedVersion, binDir); err != nil {
+	// "bag" keeps a direct version symlink and must be re-pointed on every
+	// update; every other managed binary uses the PATH shim, which already
+	// resolves the active version dynamically and needs no relinking here.
+	if name == "bag" {
+		if err := store.Unlink(name, binDir); err != nil {
+			return fmt.Errorf("removing old symlink: %w", err)
+		}
+		if err := store.LinkToPath(name, resolution.ResolvedVersion, binDir); err != nil {
+			return fmt.Errorf("installing: %w", err)
+		}
+	} else if err := store.LinkShim(name, binDir); err != nil {
 		return fmt.Errorf("installing: %w", err)
 	}
 
@@ -130,8 +136,10 @@ func updateBinary(ctx context.Context, manPath, binDir, name string) error {
 	entry.Active = resolution.ResolvedVersion
 	// manifest + lockfile changes
 	if err := postInstall(manPath, name, version, hash, entry); err != nil {
-		_ = store.Unlink(name, binDir)
-		_ = store.LinkToPath(name, oldVersion, binDir)
+		if name == "bag" {
+			_ = store.Unlink(name, binDir)
+			_ = store.LinkToPath(name, oldVersion, binDir)
+		}
 		return fmt.Errorf("post-install: %w", err)
 	}
 	fmt.Printf("successfully updated %s\n", color.GreenString(name))

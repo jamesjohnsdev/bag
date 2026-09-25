@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -25,6 +26,13 @@ var (
 )
 
 func main() {
+	if base := filepath.Base(os.Args[0]); base != "bag" && base != "bag.exe" {
+		if err := cmd.RunExec(base, os.Args[1:]); err != nil {
+			log.Fatalf("%s", err.Error())
+		}
+		return
+	}
+
 	if err := config.Load(); err != nil {
 		log.Fatalf("loading config: %s", err.Error())
 	}

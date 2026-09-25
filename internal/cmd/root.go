@@ -25,6 +25,7 @@ type CLI struct {
 	Remove   RemoveCmd   `cmd:"" help:"Remove an installed binary"`
 	View     ViewCmd     `cmd:"" help:"View details of an installed binary"`
 	Which    WhichCmd    `cmd:"" help:"Find the stored path of a binary"`
+	Exec     ExecCmd     `cmd:"" help:"Run a managed binary by name"`
 	Tool     ToolCmd     `cmd:"" help:"Manage project tools"`
 }
 
@@ -39,6 +40,7 @@ var (
 	_ command = (*RemoveCmd)(nil)
 	_ command = (*ViewCmd)(nil)
 	_ command = (*WhichCmd)(nil)
+	_ command = (*ExecCmd)(nil)
 	_ command = (*ToolCmd)(nil)
 	_ command = (*UseCmd)(nil)
 
