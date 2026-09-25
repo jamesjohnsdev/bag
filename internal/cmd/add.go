@@ -126,7 +126,7 @@ func addBinary(ctx context.Context, manPath, binDir, source string, local, scrip
 			version: {Source: storedSource},
 		},
 	}
-	if err := store.LinkToPath(binName, version, binDir); err != nil {
+	if err := linkBinary(binName, version, binDir); err != nil {
 		return fmt.Errorf("installing: %w", err)
 	}
 

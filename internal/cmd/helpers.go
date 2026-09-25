@@ -8,6 +8,7 @@ import (
 	"github.com/alecthomas/kong"
 
 	"github.com/jamesjohnsdev/bag/internal/manifest"
+	"github.com/jamesjohnsdev/bag/internal/store"
 )
 
 type WorkSpace struct {
@@ -34,6 +35,18 @@ func workSpace(local bool) (WorkSpace, error) {
 		binDir:  binDir,
 		manPath: manPath,
 	}, nil
+}
+
+// linkBinary points binDir/name at version. Every managed binary except
+// "bag" itself uses the PATH shim (store.LinkShim), which resolves its
+// active version dynamically and so never needs re-pointing when version
+// changes. "bag" keeps the old direct-to-version symlink (store.LinkToPath)
+// since there's no case for a per-project bag version - see exec.go.
+func linkBinary(name, version, binDir string) error {
+	if name == "bag" {
+		return store.LinkToPath(name, version, binDir)
+	}
+	return store.LinkShim(name, binDir)
 }
 
 func IsKnown(parser *kong.Kong, command string) bool {

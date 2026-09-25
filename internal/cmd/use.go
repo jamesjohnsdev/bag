@@ -35,18 +35,28 @@ func useBinaryVersion(manPath, binDir, binary, version string) error {
 	}
 	oldVersion := binEntry.Active
 
-	if err := store.Unlink(binary, binDir); err != nil {
-		return fmt.Errorf("removing old symlink: %w", err)
-	}
-	if err := store.LinkToPath(binary, version, binDir); err != nil {
-		_ = store.LinkToPath(binary, oldVersion, binDir)
-		return fmt.Errorf("creating symlink: %w", err)
+	// "bag" keeps a direct version symlink and must be re-pointed on every
+	// use; every other managed binary uses the PATH shim, which resolves
+	// its active version dynamically - switching versions is purely a
+	// manifest change, nothing on disk needs to move.
+	if binary == "bag" {
+		if err := store.Unlink(binary, binDir); err != nil {
+			return fmt.Errorf("removing old symlink: %w", err)
+		}
+		if err := store.LinkToPath(binary, version, binDir); err != nil {
+			_ = store.LinkToPath(binary, oldVersion, binDir)
+			return fmt.Errorf("creating symlink: %w", err)
+		}
+	} else if err := store.LinkShim(binary, binDir); err != nil {
+		return fmt.Errorf("creating shim: %w", err)
 	}
 
 	binEntry.Active = version
 	if err := manifest.AddBinary(manPath, binary, binEntry); err != nil {
-		_ = store.Unlink(binary, binDir)
-		_ = store.LinkToPath(binary, oldVersion, binDir)
+		if binary == "bag" {
+			_ = store.Unlink(binary, binDir)
+			_ = store.LinkToPath(binary, oldVersion, binDir)
+		}
 		return fmt.Errorf("updating manifest: %w", err)
 	}
 
