@@ -30,6 +30,19 @@ func (cmd *AddCmd) Run(ctx context.Context) error {
 	return addBinary(ctx, ws.manPath, ws.binDir, cmd.Source, cmd.Local, cmd.Script, cmd.Name, cmd.Tag)
 }
 
+type AddToolCmd AddCmd
+
+func (cmd *AddToolCmd) Run(ctx context.Context) error {
+	ws, err := workSpace(true)
+	if err != nil {
+		return fmt.Errorf("getting local workspace: %w", err)
+	}
+	if err := ws.requireLocal(); err != nil {
+		return err
+	}
+	return addBinary(ctx, ws.manPath, ws.binDir, cmd.Source, cmd.Local, cmd.Script, cmd.Name, cmd.Tag)
+}
+
 // addBinary resolves and installs a binary into the given manifest/binDir, shared by
 // AddCmd and its project-scoped tool equivalent.
 func addBinary(ctx context.Context, manPath, binDir, source string, local, script bool, name, tag string) error {
