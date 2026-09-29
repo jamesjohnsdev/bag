@@ -62,8 +62,14 @@ You can update project tools by running: `bag tool update`, which will update al
 
 Tools can be removed by running: `bag tool remove <tool-name>`.
 
-> [!NOTE]
-> You can substitute `bag tool run` for `bag run` if there is no naming conflict with a globally defined bag.
+## Running installed tools
+
+Once a binary or script is installed (via `bag add` or `bag tool add`), you can run it two ways:
+
+- Directly by name, e.g. `issues` — install links a shim onto your `PATH` (`~/.local/bin`).
+- Via `bag exec <name> [args...]`.
+
+Both resolve the same way: if the current directory (or an ancestor) has a local `bag.toml` with that tool installed and active, the local version runs; otherwise the globally installed version runs.
 
 ## Scripts
 
@@ -75,6 +81,8 @@ They are still pinned to SHA256 hashes, and stored locally.
 `commands` are also supported, and will be ran similarly. These are any valid shell syntax.
 `commands` cannot be versioned, nor pinned to a specific version.
 
+Commands are invoked directly by name, e.g. `bag lint`. Resolution follows the same local-then-global order as binaries: bag checks the current directory (and its ancestors) for a local `bag.toml` defining the command first, then falls back to the global one.
+
 > [!NOTE]
 > You should generally prefer `scripts` over running a command like `cmd = "./script.sh"`.
 
@@ -82,13 +90,13 @@ They are still pinned to SHA256 hashes, and stored locally.
 
 Bag uses a `bag.toml` file to store information about the installed binaries. This file is created when you run `bag init`. It contains a list of binaries and their versions.
 
-It also contains scripts which can be run using the `bag run` command.
+It also contains scripts, which are run the same way as any other installed tool (see [Running installed tools](#running-installed-tools)).
 
 E.g.
 
 ```toml
 [commands]
-lint = "golangci-lint run" # Would run with `bag lint` or `bag run lint`
+lint = "golangci-lint run" # Would run with `bag lint`
 
 [issues] # Name of binary can be customised however you like
 source= "github.com/jamesjohnsdev/issues" # Remote path to the binary
