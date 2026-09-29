@@ -28,9 +28,31 @@ func writeGlobalManifest(t *testing.T, content string) {
 	}
 }
 
+// chdirEmpty chdirs the test into a fresh temp dir with no bag.toml
+// anywhere in its ancestry, so local manifest resolution reliably falls
+// through to global regardless of the real repo's working tree state.
+func chdirEmpty(t *testing.T) {
+	t.Helper()
+	t.Chdir(t.TempDir())
+}
+
+// writeLocalManifest chdirs the test into a fresh temp dir and writes the
+// given TOML content to bag.toml there, so RunCustom resolves it as the
+// local manifest.
+func writeLocalManifest(t *testing.T, content string) {
+	t.Helper()
+	dir := t.TempDir()
+	manPath := filepath.Join(dir, "bag.toml")
+	if err := os.WriteFile(manPath, []byte(content), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	t.Chdir(dir)
+}
+
 func TestRunCustom(t *testing.T) {
 	t.Run("unknown command is not handled", func(t *testing.T) {
 		writeGlobalManifest(t, "[commands]\nhello = \"echo hi\"\n")
+		chdirEmpty(t)
 
 		handled, err := cmd.RunCustom("goodbye", nil)
 		if handled {
@@ -44,6 +66,7 @@ func TestRunCustom(t *testing.T) {
 	t.Run("known command is handled and runs", func(t *testing.T) {
 		outFile := filepath.Join(t.TempDir(), "out.txt")
 		writeGlobalManifest(t, "[commands]\nhello = \"echo hi > "+outFile+"\"\n")
+		chdirEmpty(t)
 
 		handled, err := cmd.RunCustom("hello", nil)
 		if !handled {
@@ -66,6 +89,7 @@ func TestRunCustom(t *testing.T) {
 		// below must not reference $@ directly.
 		outFile := filepath.Join(t.TempDir(), "out.txt")
 		writeGlobalManifest(t, "[commands]\ngreet = \"echo > "+outFile+"\"\n")
+		chdirEmpty(t)
 
 		handled, err := cmd.RunCustom("greet", []string{"foo", "bar baz"})
 		if !handled {
@@ -85,6 +109,7 @@ func TestRunCustom(t *testing.T) {
 
 	t.Run("nonzero exit surfaces as ExitError", func(t *testing.T) {
 		writeGlobalManifest(t, "[commands]\nfail = \"exit 7\"\n")
+		chdirEmpty(t)
 
 		handled, err := cmd.RunCustom("fail", nil)
 		if !handled {
@@ -101,6 +126,7 @@ func TestRunCustom(t *testing.T) {
 
 	t.Run("invalid manifest surfaces parse error", func(t *testing.T) {
 		writeGlobalManifest(t, "not valid toml [[[")
+		chdirEmpty(t)
 
 		handled, err := cmd.RunCustom("hello", nil)
 		if handled {
@@ -108,6 +134,67 @@ func TestRunCustom(t *testing.T) {
 		}
 		if err == nil || !strings.Contains(err.Error(), "parsing manifest") {
 			t.Errorf("err = %v, want error containing %q", err, "parsing manifest")
+		}
+	})
+
+	t.Run("local command overrides global", func(t *testing.T) {
+		globalOut := filepath.Join(t.TempDir(), "global-out.txt")
+		writeGlobalManifest(t, "[commands]\nhello = \"echo global > "+globalOut+"\"\n")
+
+		localOut := filepath.Join(t.TempDir(), "local-out.txt")
+		writeLocalManifest(t, "[commands]\nhello = \"echo local > "+localOut+"\"\n")
+
+		handled, err := cmd.RunCustom("hello", nil)
+		if !handled {
+			t.Fatal("handled = false, want true")
+		}
+		if err != nil {
+			t.Fatalf("err = %v, want nil", err)
+		}
+
+		got, err := os.ReadFile(localOut)
+		if err != nil {
+			t.Fatalf("ReadFile(local) error = %v", err)
+		}
+		if want := "local\n"; string(got) != want {
+			t.Errorf("output = %q, want %q", got, want)
+		}
+		if _, err := os.Stat(globalOut); !os.IsNotExist(err) {
+			t.Error("global command ran, want only local to run")
+		}
+	})
+
+	t.Run("falls back to global when no local manifest defines the command", func(t *testing.T) {
+		outFile := filepath.Join(t.TempDir(), "out.txt")
+		writeGlobalManifest(t, "[commands]\nhello = \"echo global > "+outFile+"\"\n")
+		chdirEmpty(t)
+
+		handled, err := cmd.RunCustom("hello", nil)
+		if !handled {
+			t.Fatal("handled = false, want true")
+		}
+		if err != nil {
+			t.Fatalf("err = %v, want nil", err)
+		}
+		got, err := os.ReadFile(outFile)
+		if err != nil {
+			t.Fatalf("ReadFile() error = %v", err)
+		}
+		if want := "global\n"; string(got) != want {
+			t.Errorf("output = %q, want %q", got, want)
+		}
+	})
+
+	t.Run("not handled when neither local nor global define the command", func(t *testing.T) {
+		writeGlobalManifest(t, "[commands]\nhello = \"echo hi\"\n")
+		chdirEmpty(t)
+
+		handled, err := cmd.RunCustom("missing", nil)
+		if handled {
+			t.Error("handled = true, want false")
+		}
+		if err != nil {
+			t.Errorf("err = %v, want nil", err)
 		}
 	})
 }
@@ -143,6 +230,7 @@ func FuzzRunCustomArgs(f *testing.F) {
 		// below must not reference $@ directly.
 		outFile := filepath.Join(t.TempDir(), "out")
 		writeGlobalManifest(t, "[commands]\necho = \"printf '%s' > "+outFile+"\"\n")
+		chdirEmpty(t)
 
 		handled, err := cmd.RunCustom("echo", []string{arg})
 		if !handled {
