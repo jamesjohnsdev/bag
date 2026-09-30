@@ -16,7 +16,20 @@ type ListCmd struct {
 func (cmd ListCmd) Run(ctx context.Context) error {
 	ws, err := workSpace(false)
 	if err != nil {
-		return fmt.Errorf("failed to get workspace: %w", err)
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	return listBinaryVersions(ws.manPath, cmd.BinaryName)
+}
+
+type ListToolCmd ListCmd
+
+func (cmd ListToolCmd) Run(ctx context.Context) error {
+	ws, err := workSpace(true)
+	if err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	if err = ws.requireLocal(); err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
 	}
 	return listBinaryVersions(ws.manPath, cmd.BinaryName)
 }
