@@ -14,7 +14,6 @@ import (
 type LockCmd struct {
 	View  LockViewCmd  `cmd:"" help:"View the lock file"`
 	Check LockCheckCmd `cmd:"" help:"Validate lock file matches expected format"`
-	Tool  LockToolCmd  `cmd:"" help:"Lock commands for local project tools"`
 }
 
 type LockViewCmd struct{}
