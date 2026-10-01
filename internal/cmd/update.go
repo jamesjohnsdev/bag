@@ -28,6 +28,21 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	return updateBinary(ctx, ws.manPath, ws.binDir, cmd.Name)
 }
 
+type UpdateToolCmd struct {
+	Name string `arg:"" help:"Name of the binary to view"`
+}
+
+func (cmd *UpdateToolCmd) Run(ctx context.Context) error {
+	ws, err := workSpace(true)
+	if err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	if err = ws.requireLocal(); err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	return updateBinary(ctx, ws.manPath, ws.binDir, cmd.Name)
+}
+
 // updateBinary resolves the latest version for a known manifest entry and installs it,
 // shared by UpdateCmd and its project-scoped tool equivalent.
 // initial implementation of update will only handle known sources
