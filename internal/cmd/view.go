@@ -21,6 +21,19 @@ func (cmd *ViewCmd) Run(ctx context.Context) error {
 	return viewBinary(ws.manPath, cmd.Name)
 }
 
+type ViewToolCmd ViewCmd
+
+func (cmd *ViewToolCmd) Run(ctx context.Context) error {
+	ws, err := workSpace(true)
+	if err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	if err = ws.requireLocal(); err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	return viewBinary(ws.manPath, cmd.Name)
+}
+
 // viewBinary prints the active version details of a manifest entry, shared by ViewCmd
 // and its project-scoped tool equivalent.
 func viewBinary(manPath, name string) error {
