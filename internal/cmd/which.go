@@ -20,6 +20,19 @@ func (cmd *WhichCmd) Run(ctx context.Context) error {
 	return whichBinary(ws.manPath, cmd.Name)
 }
 
+type WhichToolCmd WhichCmd
+
+func (cmd *WhichToolCmd) Run(ctx context.Context) error {
+	ws, err := workSpace(true)
+	if err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	if err = ws.requireLocal(); err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	return whichBinary(ws.manPath, cmd.Name)
+}
+
 // whichBinary prints the stored path of a manifest entry's active version, shared by
 // WhichCmd and its project-scoped tool equivalent.
 func whichBinary(manPath, name string) error {
