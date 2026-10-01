@@ -23,6 +23,19 @@ func (cmd *UseCmd) Run(ctx context.Context) error {
 	return useBinaryVersion(ws.manPath, ws.binDir, cmd.Binary, cmd.Version)
 }
 
+type UseToolCmd UseCmd
+
+func (cmd *UseToolCmd) Run(ctx context.Context) error {
+	ws, err := workSpace(true)
+	if err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	if err = ws.requireLocal(); err != nil {
+		return fmt.Errorf("getting workspace: %w", err)
+	}
+	return useBinaryVersion(ws.manPath, ws.binDir, cmd.Binary, cmd.Version)
+}
+
 // useBinaryVersion switches the active version of a known manifest entry, shared by
 // UseCmd and its project-scoped tool equivalent.
 func useBinaryVersion(manPath, binDir, binary, version string) error {

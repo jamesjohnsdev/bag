@@ -47,6 +47,7 @@ var (
 	_ command = (*ExecCmd)(nil)
 	_ command = (*ToolCmd)(nil)
 	_ command = (*UseCmd)(nil)
+	_ command = (*UseToolCmd)(nil)
 
 	_ command = (*ManifestCheckCmd)(nil)
 	_ command = (*ManifestListCmd)(nil)
