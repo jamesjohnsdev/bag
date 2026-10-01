@@ -13,7 +13,7 @@ type ToolCmd struct {
 	// Remove   RemoveToolCmd   `cmd:"" help:"Remove an executable"`
 	// Update   UpdateToolCmd   `cmd:"" help:"Update an executable"`
 	// Use      UseToolCmd      `cmd:"" help:"Select a version of an executable to use"`
-	// View     ViewToolCmd     `cmd:"" help:"View information about the currently used executable in a project"`
+	View  ViewToolCmd  `cmd:"" help:"View information about the currently used executable in a project"`
 	Which WhichToolCmd `cmd:"" help:"Find the stored path of the selected executable"`
 }
 
