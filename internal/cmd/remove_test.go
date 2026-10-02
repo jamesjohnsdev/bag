@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/jamesjohnsdev/bag/internal/cmd"
@@ -85,6 +86,45 @@ func TestRemoveCmdRun(t *testing.T) {
 		t.Fatalf("Run() error = %v", err)
 	}
 
+	// Default remove only drops manifest/lock entries; the linked binary
+	// and stored files are left alone unless --purge is passed.
+	if _, err := os.Lstat(filepath.Join(binDir, "foo")); err != nil {
+		t.Errorf("expected symlink preserved, stat err = %v", err)
+	}
+	if !store.BinaryExists("foo", "1.0.0") {
+		t.Error("expected binary preserved in store")
+	}
+
+	manPath, _, err := manifest.Get(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	man, err := manifest.Parse(manPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := man.Binaries["foo"]; ok {
+		t.Error("expected manifest entry removed")
+	}
+
+	lf, err := manifest.ParseLock(manifest.FindLock(manPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := lf.Entries["foo"]; ok {
+		t.Error("expected lock entry removed")
+	}
+}
+
+func TestRemoveCmdRunPurge(t *testing.T) {
+	_, binDir := setupHome(t)
+	installTestBinary(t, "foo", "1.0.0")
+
+	removeCmd := &cmd.RemoveCmd{Name: "foo", Purge: true}
+	if err := removeCmd.Run(context.Background()); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
 	if _, err := os.Lstat(filepath.Join(binDir, "foo")); !os.IsNotExist(err) {
 		t.Errorf("expected symlink removed, stat err = %v", err)
 	}
@@ -124,7 +164,8 @@ func TestRemoveCmdRunNotInManifest(t *testing.T) {
 
 func TestRemoveCmdRunMissingSymlink(t *testing.T) {
 	// Manifest/lock know about the binary, but nothing was ever linked into
-	// binDir. Unlink should fail, and the manifest/lock must be left intact.
+	// binDir. Default remove leaves symlinks alone so it succeeds; purge
+	// must fail on Unlink and leave manifest/lock intact.
 	setupHome(t)
 
 	src := filepath.Join(t.TempDir(), "src-bin")
@@ -153,16 +194,44 @@ func TestRemoveCmdRunMissingSymlink(t *testing.T) {
 	}
 
 	removeCmd := &cmd.RemoveCmd{Name: "foo"}
-	if err := removeCmd.Run(context.Background()); err == nil {
-		t.Fatal("expected error unlinking nonexistent symlink")
+	if err := removeCmd.Run(context.Background()); err != nil {
+		t.Fatalf("Run() without purge should succeed despite missing symlink, got err = %v", err)
 	}
 
 	man, err := manifest.Parse(manPath)
 	if err != nil {
 		t.Fatal(err)
 	}
+	if _, ok := man.Binaries["foo"]; ok {
+		t.Error("expected manifest entry removed")
+	}
+
+	// Re-add manifest/lock entries and verify purge fails on the missing
+	// symlink, leaving manifest/lock intact.
+	if err := manifest.AddBinary(manPath, "foo", manifest.BinaryEntry{
+		Type:   "binary",
+		Active: "1.0.0",
+		Versions: map[string]manifest.VersionEntry{
+			"1.0.0": {Source: src},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := manifest.AddLockEntry(manifest.FindLock(manPath), "foo", "1.0.0", manifest.LockEntry{Hash: hash}); err != nil {
+		t.Fatal(err)
+	}
+
+	purgeCmd := &cmd.RemoveCmd{Name: "foo", Purge: true}
+	if err := purgeCmd.Run(context.Background()); err == nil {
+		t.Fatal("expected error unlinking nonexistent symlink with purge")
+	}
+
+	man, err = manifest.Parse(manPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if _, ok := man.Binaries["foo"]; !ok {
-		t.Error("expected manifest entry to remain after failed remove")
+		t.Error("expected manifest entry to remain after failed purge")
 	}
 }
 
@@ -186,7 +255,7 @@ func TestRemoveCmdRunRollsBackSymlinkOnStoreRemoveFailure(t *testing.T) {
 	// setupHome's cleanup walk-chmods the whole home tree writable again,
 	// so no explicit restore is needed here.
 
-	removeCmd := &cmd.RemoveCmd{Name: "foo"}
+	removeCmd := &cmd.RemoveCmd{Name: "foo", Purge: true}
 	if err := removeCmd.Run(context.Background()); err == nil {
 		t.Fatal("expected error removing binary from store")
 	}
@@ -209,5 +278,145 @@ func TestRemoveCmdRunRollsBackSymlinkOnStoreRemoveFailure(t *testing.T) {
 	}
 	if _, ok := man.Binaries["foo"]; !ok {
 		t.Error("expected manifest entry to remain after rollback")
+	}
+}
+
+// installLocalTestBinary initialises a project-local bag in projectDir and
+// installs name/version into the shared store, linking binDir and recording
+// the entry in the local manifest + lock only.
+func installLocalTestBinary(t *testing.T, projectDir, name, version string) (localPath string) {
+	t.Helper()
+
+	t.Chdir(projectDir)
+	if err := (&cmd.InitToolCmd{}).Run(context.Background()); err != nil {
+		t.Fatalf("InitToolCmd.Run() error = %v", err)
+	}
+
+	src := filepath.Join(t.TempDir(), "src-bin")
+	if err := os.WriteFile(src, []byte("fake binary"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	hash, err := store.InstallLocal(name, version, src)
+	if err != nil {
+		t.Fatalf("InstallLocal() error = %v", err)
+	}
+	binDir := filepath.Join(os.Getenv("HOME"), ".local", "bin")
+	if err := store.LinkToPath(name, version, binDir); err != nil {
+		t.Fatalf("LinkToPath() error = %v", err)
+	}
+
+	localPath = filepath.Join(projectDir, manifest.ManName)
+	if err := manifest.AddBinary(localPath, name, manifest.BinaryEntry{
+		Type:   "binary",
+		Active: version,
+		Versions: map[string]manifest.VersionEntry{
+			version: {Source: src},
+		},
+	}); err != nil {
+		t.Fatalf("AddBinary() error = %v", err)
+	}
+	if err := manifest.AddLockEntry(manifest.FindLock(localPath), name, version, manifest.LockEntry{Hash: hash}); err != nil {
+		t.Fatalf("AddLockEntry() error = %v", err)
+	}
+	return localPath
+}
+
+func TestRemoveToolCmdRunNoLocalManifest(t *testing.T) {
+	setupHome(t)
+	t.Chdir(t.TempDir())
+
+	removeCmd := &cmd.RemoveToolCmd{Name: "foo"}
+	err := removeCmd.Run(context.Background())
+	if err == nil {
+		t.Fatal("expected error when no local bag.toml exists")
+	}
+	if !strings.Contains(err.Error(), "bag tool init") {
+		t.Errorf("err = %v, want message pointing at `bag tool init`", err)
+	}
+}
+
+func TestRemoveToolCmdRun(t *testing.T) {
+	_, binDir := setupHome(t)
+	projectDir := t.TempDir()
+	localPath := installLocalTestBinary(t, projectDir, "foo", "1.0.0")
+
+	removeCmd := &cmd.RemoveToolCmd{Name: "foo"}
+	if err := removeCmd.Run(context.Background()); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	// Default tool remove drops the local manifest/lock entries only.
+	man, err := manifest.Parse(localPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := man.Binaries["foo"]; ok {
+		t.Error("expected local manifest entry removed")
+	}
+	lf, err := manifest.ParseLock(manifest.FindLock(localPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := lf.Entries["foo"]; ok {
+		t.Error("expected local lock entry removed")
+	}
+	if _, err := os.Lstat(filepath.Join(binDir, "foo")); err != nil {
+		t.Errorf("expected symlink preserved, stat err = %v", err)
+	}
+	if !store.BinaryExists("foo", "1.0.0") {
+		t.Error("expected binary preserved in store")
+	}
+
+	// Global manifest must be untouched by a project-scoped remove.
+	globalPath, _, err := manifest.Get(false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = globalPath
+}
+
+func TestRemoveToolCmdRunPurge(t *testing.T) {
+	_, binDir := setupHome(t)
+	projectDir := t.TempDir()
+	localPath := installLocalTestBinary(t, projectDir, "foo", "1.0.0")
+
+	removeCmd := &cmd.RemoveToolCmd{Name: "foo", Purge: true}
+	if err := removeCmd.Run(context.Background()); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	man, err := manifest.Parse(localPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := man.Binaries["foo"]; ok {
+		t.Error("expected local manifest entry removed")
+	}
+	lf, err := manifest.ParseLock(manifest.FindLock(localPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := lf.Entries["foo"]; ok {
+		t.Error("expected local lock entry removed")
+	}
+	if _, err := os.Lstat(filepath.Join(binDir, "foo")); !os.IsNotExist(err) {
+		t.Errorf("expected symlink removed, stat err = %v", err)
+	}
+	if store.BinaryExists("foo", "1.0.0") {
+		t.Error("expected binary removed from store")
+	}
+}
+
+func TestRemoveToolCmdRunNotInManifest(t *testing.T) {
+	setupHome(t)
+	projectDir := t.TempDir()
+	t.Chdir(projectDir)
+	if err := (&cmd.InitToolCmd{}).Run(context.Background()); err != nil {
+		t.Fatalf("InitToolCmd.Run() error = %v", err)
+	}
+
+	removeCmd := &cmd.RemoveToolCmd{Name: "does-not-exist"}
+	if err := removeCmd.Run(context.Background()); err == nil {
+		t.Fatal("expected error removing binary absent from local manifest")
 	}
 }

@@ -60,7 +60,7 @@ bag tool add <remote-path> --project <project-path> # Project-path is optional -
 
 You can update project tools by running: `bag tool update`, which will update all tools in the project. Otherwise, you can update a specific tool by running: `bag tool update <tool-name>`.
 
-Tools can be removed by running: `bag tool remove <tool-name>`.
+Tools can be removed by running: `bag tool remove <tool-name>`. You can also use the `--purge` flag to delete the underlying binary.
 
 ## Running installed tools
 
