@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0](https://github.com/jamesjohnsdev/bag/compare/v0.3.6...v0.4.0) (2026-10-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* reworked remove command
+
+### Features
+
+* `tool add` command ([cad3fd5](https://github.com/jamesjohnsdev/bag/commit/cad3fd57ae2c91760d0114fcf77342efd3e6395c))
+* `tool list` command ([cbb756e](https://github.com/jamesjohnsdev/bag/commit/cbb756e0b982b138caa368bb88e493dd09d93214))
+* `tool update` command ([b8a8fe0](https://github.com/jamesjohnsdev/bag/commit/b8a8fe08b7072b5a7ea62706e80dbc706df46704))
+* `tool use` command ([e260424](https://github.com/jamesjohnsdev/bag/commit/e26042437bf31b714f183e62ac3c5560dd21c712))
+* `tool view` command ([8687628](https://github.com/jamesjohnsdev/bag/commit/8687628ea493577fbf3a52f0b727387f46eaec3c))
+* `tool which` command ([5ebda41](https://github.com/jamesjohnsdev/bag/commit/5ebda4197e5ebe9ea979594a91a038752cccfa04))
+* move lock tool commands to match pattern of other tool subcommands ([4ea2a8f](https://github.com/jamesjohnsdev/bag/commit/4ea2a8fc4556fe725b535601e5ac7440a4698ce8))
+* resolve commands from tool dir ([92e0851](https://github.com/jamesjohnsdev/bag/commit/92e0851c37e13b1cca0c984e3d792df34321d716))
+* reworked remove command ([9a435b4](https://github.com/jamesjohnsdev/bag/commit/9a435b45227d602c3c4a69eb059dd767043fcf26))
+* update workspace to facilitate tool commands ([1f1ab61](https://github.com/jamesjohnsdev/bag/commit/1f1ab6188bb0ce451c83c06bbb7337b18737e3a2))
+
 ## [0.3.6](https://github.com/jamesjohnsdev/bag/compare/v0.3.5...v0.3.6) (2026-09-25)
 
 
