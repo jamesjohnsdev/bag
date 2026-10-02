@@ -28,9 +28,7 @@ func (cmd *UpdateCmd) Run(ctx context.Context) error {
 	return updateBinary(ctx, ws.manPath, ws.binDir, cmd.Name)
 }
 
-type UpdateToolCmd struct {
-	Name string `arg:"" help:"Name of the binary to view"`
-}
+type UpdateToolCmd UpdateCmd
 
 func (cmd *UpdateToolCmd) Run(ctx context.Context) error {
 	ws, err := workSpace(true)
