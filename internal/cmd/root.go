@@ -41,6 +41,7 @@ var (
 	_ command = (*ListCmd)(nil)
 	_ command = (*ListToolCmd)(nil)
 	_ command = (*RemoveCmd)(nil)
+	_ command = (*RemoveToolCmd)(nil)
 	_ command = (*ViewCmd)(nil)
 	_ command = (*ViewToolCmd)(nil)
 	_ command = (*WhichCmd)(nil)
