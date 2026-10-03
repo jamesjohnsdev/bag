@@ -27,6 +27,7 @@ type CLI struct {
 	Which    WhichCmd    `cmd:"" help:"Find the stored path of a binary"`
 	Exec     ExecCmd     `cmd:"" help:"Run a managed binary by name"`
 	Tool     ToolCmd     `cmd:"" help:"Manage project tools"`
+	Purge    PurgeCmd    `cmd:"" help:"Purge unused executables"`
 }
 
 // TODO: Consider changing definitions for commented out ones
@@ -50,6 +51,7 @@ var (
 	_ command = (*ToolCmd)(nil)
 	_ command = (*UseCmd)(nil)
 	_ command = (*UseToolCmd)(nil)
+	_ command = (*PurgeCmd)(nil)
 
 	_ command = (*ManifestCheckCmd)(nil)
 	_ command = (*ManifestListCmd)(nil)
