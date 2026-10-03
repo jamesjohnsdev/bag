@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -132,4 +133,26 @@ func GetBinaryDetails(manPath, binName string) (BinaryEntry, error) {
 		return BinaryEntry{}, fmt.Errorf("unable to find manifest entry for %s", binName)
 	}
 	return entry, nil
+}
+
+func RemoveInactiveEntries(entry BinaryEntry) (BinaryEntry, error) {
+	verEntry, ok := entry.Versions[entry.Active]
+	if !ok {
+		return BinaryEntry{}, fmt.Errorf("getting version entry: %s", entry.Active)
+	}
+	return BinaryEntry{
+		Type:   entry.Type,
+		Active: entry.Active,
+		Versions: map[string]VersionEntry{
+			entry.Active: verEntry,
+		},
+	}, nil
+}
+
+func GetActiveVersEntry(entry BinaryEntry) (VersionEntry, error) {
+	versEntry, ok := entry.Versions[entry.Active]
+	if !ok {
+		return VersionEntry{}, errors.New("finding active version entry")
+	}
+	return versEntry, nil
 }
