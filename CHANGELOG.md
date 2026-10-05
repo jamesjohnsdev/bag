@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/jamesjohnsdev/bag/compare/v0.4.1...v0.4.2) (2026-10-05)
+
+
+### Bug Fixes
+
+* man page regens on each version ([add5e6d](https://github.com/jamesjohnsdev/bag/commit/add5e6d67e0b4263e20ce5c552bb8caa43582177))
+
 ## [0.4.1](https://github.com/jamesjohnsdev/bag/compare/v0.4.0...v0.4.1) (2026-10-05)
 
 
