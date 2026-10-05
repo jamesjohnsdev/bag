@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/jamesjohnsdev/bag/compare/v0.4.0...v0.4.1) (2026-10-05)
+
+
+### Features
+
+* enhanced generated information on purge ([8ce7e42](https://github.com/jamesjohnsdev/bag/commit/8ce7e42103637eb49184de864f6bc3a24ef350cd))
+* purge command ([3133a94](https://github.com/jamesjohnsdev/bag/commit/3133a94c80a7aae999752a0d96f38b193b366642))
+
 ## [0.4.0](https://github.com/jamesjohnsdev/bag/compare/v0.3.6...v0.4.0) (2026-10-02)
 
 
