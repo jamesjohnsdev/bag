@@ -6,19 +6,24 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/fatih/color"
 
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 	"github.com/jamesjohnsdev/bag/internal/store"
 )
 
-type PurgeCmd struct{}
+type PurgeCmd struct {
+	Verbose bool `flag:"" help:"Print additional information"`
+}
 
 func (cmd *PurgeCmd) Run(context.Context) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return fmt.Errorf("getting home directory: %w", err)
 	}
-	fullManifest, _, err := collectActiveManifests(homeDir)
+	fullManifest, skippedFiles, err := collectActiveManifests(homeDir)
 	if err != nil {
 		return err
 	}
@@ -27,7 +32,21 @@ func (cmd *PurgeCmd) Run(context.Context) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("successfully purged %d stores", len(deletedStores))
+	if cmd.Verbose {
+		for file, err := range skippedFiles {
+			fmt.Printf("Skipped %s: %s\n", file, color.YellowString(err.Error()))
+		}
+		for store, versions := range deletedStores {
+			fmt.Printf("Deleted %s: %s\n", store, color.YellowString(strings.Join(versions, ", ")))
+		}
+	}
+	if len(deletedStores) == 0 {
+		fmt.Println(color.GreenString("Stores are clean. No stores purged."))
+	} else if len(deletedStores) == 1 {
+		fmt.Println(color.GreenString("Successfully purged 1 store"))
+	} else {
+		fmt.Printf(color.GreenString("Successfully purged %d stores\n"), len(deletedStores))
+	}
 	return nil
 }
 
