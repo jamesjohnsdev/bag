@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/jamesjohnsdev/bag/internal/cmd"
 	"github.com/jamesjohnsdev/bag/internal/config"
+	"github.com/jamesjohnsdev/bag/internal/logging"
 )
 
 // version is set via -ldflags at build time (see .goreleaser.yaml); "dev" for local builds.
@@ -26,6 +28,15 @@ var (
 )
 
 func main() {
+	closeLog, err := logging.Setup()
+	if err != nil {
+		log.Fatalf("setting up logging: %s", err.Error())
+	}
+	defer func() {
+		_ = closeLog()
+	}()
+	slog.Info("bag started")
+
 	if base := filepath.Base(os.Args[0]); base != "bag" && base != "bag.exe" {
 		if err := cmd.RunExec(base, os.Args[1:]); err != nil {
 			log.Fatalf("%s", err.Error())
