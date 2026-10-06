@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3](https://github.com/jamesjohnsdev/bag/compare/v0.4.2...v0.4.3) (2026-10-06)
+
+
+### Features
+
+* added structured logging to existing commands ([6110502](https://github.com/jamesjohnsdev/bag/commit/6110502dde08405b4c43e73a097062c2d7a325b1))
+* logger ([fdae2de](https://github.com/jamesjohnsdev/bag/commit/fdae2deb3d46d1c00b5285c7c767b34f33dacc76))
+
 ## [0.4.2](https://github.com/jamesjohnsdev/bag/compare/v0.4.1...v0.4.2) (2026-10-05)
 
 
