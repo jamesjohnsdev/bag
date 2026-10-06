@@ -39,12 +39,14 @@ func main() {
 
 	if base := filepath.Base(os.Args[0]); base != "bag" && base != "bag.exe" {
 		if err := cmd.RunExec(base, os.Args[1:]); err != nil {
+			slog.Error("running managed executable", "binary", base, "error", err)
 			log.Fatalf("%s", err.Error())
 		}
 		return
 	}
 
 	if err := config.Load(); err != nil {
+		slog.Error("loading config", "error", err)
 		log.Fatalf("loading config: %s", err.Error())
 	}
 	versionString := fmt.Sprintf(
@@ -56,6 +58,7 @@ func main() {
 		"version": versionString,
 	})
 	if err != nil {
+		slog.Error("building command parser", "error", err)
 		log.Fatal(err)
 	}
 
@@ -63,6 +66,7 @@ func main() {
 		handled, err := cmd.RunCustom(os.Args[1], os.Args[2:])
 		if handled {
 			if err != nil {
+				slog.Error("running custom command", "command", os.Args[1], "error", err)
 				var exitErr *exec.ExitError
 				if errors.As(err, &exitErr) {
 					os.Exit(exitErr.ExitCode())
@@ -75,11 +79,18 @@ func main() {
 	}
 
 	ctx, err := parser.Parse(os.Args[1:])
+	if err != nil {
+		slog.Error("parsing command", "error", err)
+	}
 	parser.FatalIfErrorf(err)
 
 	if runtime.GOOS != "windows" && ctx.Command() != "man-install" {
 		cmd.EnsureManPage(ctx.Model)
 	}
 
-	ctx.FatalIfErrorf(ctx.Run())
+	if err := ctx.Run(); err != nil {
+		slog.Error("command failed", "command", ctx.Command(), "error", err)
+		ctx.FatalIfErrorf(err)
+	}
+	slog.Info("command completed", "command", ctx.Command())
 }

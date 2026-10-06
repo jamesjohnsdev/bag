@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/fatih/color"
 
@@ -52,6 +53,7 @@ func listBinaryVersions(manPath, binaryName string) error {
 			fmt.Printf("\u2022 %s\n", color.BlueString(version))
 		}
 	}
+	slog.Info("listed stored versions", "binary", binaryName, "count", len(entry.Versions))
 
 	// TODO: add a flag to show structured full information for all versions available
 

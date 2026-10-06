@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 	"github.com/jamesjohnsdev/bag/internal/store"
@@ -50,7 +51,9 @@ func whichBinary(manPath, name string) error {
 	}
 
 	if store.BinaryExists(name, binEntry.Active) {
-		fmt.Printf("%s\n", store.BinaryPath(name, binEntry.Active))
+		path := store.BinaryPath(name, binEntry.Active)
+		fmt.Printf("%s\n", path)
+		slog.Info("located binary", "binary", name, "version", binEntry.Active, "path", path)
 		return nil
 	}
 
