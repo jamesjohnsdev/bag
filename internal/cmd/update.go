@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"path/filepath"
 
@@ -112,6 +113,7 @@ func updateBinary(ctx context.Context, manPath, binDir, name string) error {
 			_ = resolution.Reader.Close()
 		}
 		fmt.Printf("%s is already up to date (%s)\n", color.GreenString(name), oldVersion)
+		slog.Info("binary already up to date", "binary", name, "version", oldVersion)
 		return nil
 	}
 	version = resolution.ResolvedVersion
@@ -156,5 +158,6 @@ func updateBinary(ctx context.Context, manPath, binDir, name string) error {
 		return fmt.Errorf("post-install: %w", err)
 	}
 	fmt.Printf("successfully updated %s\n", color.GreenString(name))
+	slog.Info("binary updated", "binary", name, "from_version", oldVersion, "to_version", version)
 	return nil
 }

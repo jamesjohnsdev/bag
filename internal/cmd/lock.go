@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 
@@ -50,6 +51,7 @@ func (cmd *LockToolViewCmd) Run(ctx context.Context) error {
 	}
 	if global {
 		fmt.Println("No local manifest found")
+		slog.Warn("no local manifest found")
 		return nil
 	}
 	return viewLock(manifest.FindLock(manPath))
@@ -64,6 +66,7 @@ func (cmd *LockToolCheckCmd) Run(ctx context.Context) error {
 	}
 	if global {
 		fmt.Println("No local manifest found")
+		slog.Warn("no local manifest found")
 		return nil
 	}
 	return checkLock(manifest.FindLock(manPath))
@@ -72,12 +75,14 @@ func (cmd *LockToolCheckCmd) Run(ctx context.Context) error {
 func checkLock(lockPath string) error {
 	_, err := manifest.ParseLock(lockPath)
 	if err != nil {
+		slog.Error("lock file validation failed", "path", lockPath, "error", err)
 		fmt.Printf("%s", color.RedString("Uh oh. There's a problem with your lock file"))
 		fmt.Printf("Lock location: %s\n", lockPath)
 		fmt.Printf("Error: %s", err.Error())
 		return nil
 	}
 	fmt.Printf("%s", color.GreenString("Lock file looks good!"))
+	slog.Info("lock file validated", "path", lockPath)
 	return nil
 }
 

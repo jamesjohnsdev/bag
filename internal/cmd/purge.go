@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,9 +36,11 @@ func (cmd *PurgeCmd) Run(context.Context) error {
 	if cmd.Verbose {
 		for file, err := range skippedFiles {
 			fmt.Printf("Skipped %s: %s\n", file, color.YellowString(err.Error()))
+			slog.Warn("skipped manifest during purge", "path", file, "error", err)
 		}
 		for store, versions := range deletedStores {
 			fmt.Printf("Deleted %s: %s\n", store, color.YellowString(strings.Join(versions, ", ")))
+			slog.Info("purged stored versions", "binary", store, "versions", versions)
 		}
 	}
 	if len(deletedStores) == 0 {
@@ -47,6 +50,7 @@ func (cmd *PurgeCmd) Run(context.Context) error {
 	} else {
 		fmt.Printf(color.GreenString("Successfully purged %d stores\n"), len(deletedStores))
 	}
+	slog.Info("purge completed", "stores", len(deletedStores))
 	return nil
 }
 

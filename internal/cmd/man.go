@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +24,7 @@ func (c *ManInstallCmd) Run(ctx *kong.Context) error {
 
 	fmt.Printf("man page installed to %s\n", dest)
 	fmt.Println("run `mandb` (Linux) or `makewhatis` (macOS) to refresh index, then `man bag`")
+	slog.Info("man page installed", "path", dest)
 	return nil
 }
 

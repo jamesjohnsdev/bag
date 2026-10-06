@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/fatih/color"
 
@@ -51,6 +52,7 @@ func viewBinary(manPath, name string) error {
 	fmt.Printf("Source: %s\n", color.BlueString(activeVersion.Source))
 	fmt.Printf("Type: %s\n", color.BlueString(string(entry.Type)))
 	fmt.Printf("Version: %s\n", color.BlueString(entry.Active))
+	slog.Info("viewed binary details", "binary", name, "version", entry.Active, "type", entry.Type)
 
 	return nil
 }

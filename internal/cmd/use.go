@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/fatih/color"
 
@@ -74,5 +75,6 @@ func useBinaryVersion(manPath, binDir, binary, version string) error {
 	}
 
 	fmt.Printf("Using version: %v", color.GreenString(version))
+	slog.Info("active version changed", "binary", binary, "version", version)
 	return nil
 }

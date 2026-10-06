@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -52,6 +53,7 @@ func initManifest(manifestPath string) error {
 	})
 	if err == nil {
 		fmt.Println("Intialised successfully")
+		slog.Info("manifest initialised", "path", manifestPath)
 	}
 	return err
 }

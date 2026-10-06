@@ -6,6 +6,7 @@ package output
 import (
 	"fmt"
 	"io"
+	"log/slog"
 
 	"github.com/fatih/color"
 	"github.com/schollz/progressbar/v3"
@@ -13,6 +14,7 @@ import (
 
 // Statusf prints a pacman-style "::" status line for a phase of an install/update.
 func Statusf(format string, a ...any) {
+	slog.Info(fmt.Sprintf(format, a...))
 	prefix := color.New(color.FgBlue, color.Bold).Sprint("::")
 	fmt.Printf("%s %s\n", prefix, fmt.Sprintf(format, a...))
 }

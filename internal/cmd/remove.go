@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/jamesjohnsdev/bag/internal/manifest"
 	"github.com/jamesjohnsdev/bag/internal/store"
@@ -96,5 +97,6 @@ func removeBinary(manPath, name string) error {
 	}
 
 	fmt.Printf("successfully removed: %s", name)
+	slog.Info("binary removed", "binary", name)
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/url"
 	"path/filepath"
 
@@ -148,6 +149,7 @@ func addBinary(ctx context.Context, manPath, binDir, source string, local, scrip
 		return fmt.Errorf("post-install: %w", err)
 	}
 	fmt.Printf("installed %s successfully\n", binName)
+	slog.Info("binary installed", "binary", binName, "version", version, "type", binType)
 	return nil
 }
 

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 
@@ -70,6 +71,7 @@ func (cmd *ManifestToolListCmd) Run(ctx context.Context) error {
 	}
 	if global {
 		fmt.Println("No local manifest found")
+		slog.Warn("no local manifest found")
 		return nil
 	}
 	return listManifest(manPath, cmd.Commands, cmd.Scripts, cmd.Binaries)
@@ -84,6 +86,7 @@ func (cmd *ManifestToolViewCmd) Run(ctx context.Context) error {
 	}
 	if global {
 		fmt.Println("No local manifest found")
+		slog.Warn("no local manifest found")
 		return nil
 	}
 	return viewManifest(manPath)
@@ -98,6 +101,7 @@ func (cmd *ManifestToolCheckCmd) Run(ctx context.Context) error {
 	}
 	if global {
 		fmt.Println("No local manifest found")
+		slog.Warn("no local manifest found")
 		return nil
 	}
 	return checkManifest(manPath)
@@ -106,12 +110,14 @@ func (cmd *ManifestToolCheckCmd) Run(ctx context.Context) error {
 func checkManifest(manPath string) error {
 	_, err := manifest.Parse(manPath)
 	if err != nil {
+		slog.Error("manifest validation failed", "path", manPath, "error", err)
 		fmt.Printf("%s", color.RedString("Uh oh. There's a problem with your manifest"))
 		fmt.Printf("Manifest location: %s\n", manPath)
 		fmt.Printf("Error: %s", err.Error())
 		return nil
 	}
 	fmt.Printf("%s", color.GreenString("Manifest file looks good!\n"))
+	slog.Info("manifest validated", "path", manPath)
 	return nil
 }
 
@@ -139,36 +145,44 @@ func listManifest(manPath string, commands, scripts, binaries bool) error {
 	case commands:
 		if len(man.Commands) == 0 {
 			fmt.Println("No commands found")
+			slog.Info("listed manifest commands", "count", 0)
 			return nil
 		}
-		printCommands(man.Commands)
+		count := printCommands(man.Commands)
+		slog.Info("listed manifest commands", "count", count)
 		return nil
 	case scripts:
 		if len(man.Binaries) == 0 {
 			fmt.Printf("No scripts found")
 		}
-		printScripts(man.Binaries)
+		count := printScripts(man.Binaries)
+		slog.Info("listed manifest scripts", "count", count)
 		return nil
 	case binaries:
 		if len(man.Binaries) == 0 {
 			fmt.Printf("No scripts found")
 		}
-		printBinaries(man.Binaries)
+		count := printBinaries(man.Binaries)
+		slog.Info("listed manifest binaries", "count", count)
 		return nil
 	}
 
 	fmt.Printf("%s\n", color.BlueString("Commands:"))
-	if count := printCommands(man.Commands); count == 0 {
+	commandCount := printCommands(man.Commands)
+	if commandCount == 0 {
 		fmt.Println("0 commands found")
 	}
 	fmt.Printf("%s\n", color.BlueString("Scripts:"))
-	if count := printScripts(man.Binaries); count == 0 {
+	scriptCount := printScripts(man.Binaries)
+	if scriptCount == 0 {
 		fmt.Println("0 scripts found")
 	}
 	fmt.Printf("%s\n", color.BlueString("Binaries:"))
-	if count := printBinaries(man.Binaries); count == 0 {
+	binaryCount := printBinaries(man.Binaries)
+	if binaryCount == 0 {
 		fmt.Println("0 binaries found")
 	}
+	slog.Info("listed manifest entries", "commands", commandCount, "scripts", scriptCount, "binaries", binaryCount)
 	return nil
 }
 
