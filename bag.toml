@@ -1,0 +1,6 @@
+[issues]
+  type = "binary"
+  active = "v0.2.0"
+  [issues.versions]
+    [issues.versions."v0.2.0"]
+      source = "github.com/jamesjohnsdev/issues"
