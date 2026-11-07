@@ -10,7 +10,7 @@ tool (
 
 require (
 	github.com/BurntSushi/toml v1.6.0
-	github.com/alecthomas/kong v1.16.1
+	github.com/alecthomas/kong v1.17.0
 	github.com/alecthomas/mango-kong v0.1.0
 	github.com/fatih/color v1.19.0
 	github.com/google/go-github/v89 v89.0.0
